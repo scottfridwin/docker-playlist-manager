@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install Python Dependencies",
+            "type": "shell",
+            "command": "pip install -r requirements.txt",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run App (Dev)",
+            "type": "shell",
+            "command": "python app.py",
+            "options": {
+                "env": {
+                    "PLAYLIST_DIR": "${workspaceFolder}/playlists",
+                    "MUSIC_DIR": "${workspaceFolder}/music"
+                }
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Generate Mock Music Library",
+            "type": "shell",
+            "command": "python scripts/generate_mock_data.py",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Reset Mock Music Library",
+            "type": "shell",
+            "command": "rm -rf music playlists && python scripts/generate_mock_data.py",
+            "problemMatcher": []
+        }
+    ]
+}

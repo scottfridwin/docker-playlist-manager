@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Playlist Manager",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/app.py",
+            "console": "integratedTerminal",
+            "env": {
+                "PLAYLIST_DIR": "${workspaceFolder}/playlists",
+                "MUSIC_DIR": "${workspaceFolder}/music"
+            },
+            "justMyCode": true
+        }
+    ]
+}

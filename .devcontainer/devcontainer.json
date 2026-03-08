@@ -1,4 +1,23 @@
 {
-	"name": "dev-playlist-manager",
-	"image": "mcr.microsoft.com/devcontainers/base:alpine"
+	"name": "docker-playlist-manager",
+	"image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+	"forwardPorts": [
+		8080
+	],
+	"portsAttributes": {
+		"8080": {
+			"label": "Playlist Manager",
+			"onAutoForward": "openBrowser"
+		}
+	},
+	"postCreateCommand": "pip install -r requirements.txt",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-python.debugpy",
+				"ms-azuretools.vscode-docker"
+			]
+		}
+	}
 }

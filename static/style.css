@@ -30,3 +30,36 @@ li {
     padding: 6px;
     border-bottom: 1px solid #333;
 }
+
+.playlist-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}
+
+#browser-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.browser {
+    background: #1e1e1e;
+    padding: 20px;
+    width: 600px;
+    max-height: 80vh;
+    overflow: auto;
+    border-radius: 10px;
+}
+
+.browser-row {
+    padding: 6px;
+    border-bottom: 1px solid #333;
+}

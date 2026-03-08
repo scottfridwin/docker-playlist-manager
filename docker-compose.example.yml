@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+
+  playlist-manager:
+
+    build: .
+
+    user: "1234:5678"
+
+    read_only: true
+
+    tmpfs:
+      - /tmp
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      PLAYLIST_DIR: /playlists
+      MUSIC_DIR: /music
+
+    volumes:
+      - ./playlists:/playlists
+      - /mnt/music:/music:ro

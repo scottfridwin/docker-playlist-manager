@@ -366,7 +366,7 @@ function closeBrowser() {
 }
 
 async async function loadBrowser(path) {
-    if (path === undefined || path === null) {
+    if (path === undefined || path === null || path === "undefined") {
         path = ""
     }
 

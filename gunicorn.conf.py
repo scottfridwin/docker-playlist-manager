@@ -10,6 +10,6 @@ errorlog = "-"
 capture_output = True
 disable_redirect_access_to_syslog = True
 
-# Disable control server to prevent "Read-only file system" errors
+# Set control server socket to tmpfs mount to prevent "Read-only file system" errors
 # when running in containers with strict read-only filesystem enforcement
-disable_control_server = True
+controlsocket = "/tmp/gunicorn-socket"

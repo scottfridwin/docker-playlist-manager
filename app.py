@@ -18,8 +18,15 @@ app = Flask(__name__)
 
 
 def strip_guid(name):
-    """Remove trailing GUID from folder names (e.g., '-12345678-1234-5678-9012-345678901234')"""
-    return re.sub(r'-[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$', '', name, flags=re.IGNORECASE)
+    """Remove trailing GUID from folder names.
+
+    Originally we stripped hyphen-prefixed UUIDs, but directories are actually
+    formatted like "Artist Name (12345678-1234-5678-9012-345678901234)".
+    This function removes the parenthesized UUID at the end while leaving
+    the artist name intact.
+    """
+    # strip parenthesized UUID at end, optionally preceded by space
+    return re.sub(r"\s*\([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\)$", "", name, flags=re.IGNORECASE)
 
 
 def playlist_path(name):

@@ -410,6 +410,7 @@ li {
     align-items: center;
     gap: 12px;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .browser-row:hover {
@@ -420,6 +421,19 @@ li {
 
 .browser-row:last-child {
     border-bottom: none;
+}
+
+.browser-row input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.browser-row label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: 0;
+    width: 100%;
 }
 
 .browser-row button {

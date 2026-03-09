@@ -17,6 +17,7 @@ services:
     environment:
       PLAYLIST_DIR: /playlists
       MUSIC_DIR: /music
+      AUDIO_EXTENSIONS: mp3,flac,wav,aac,m4a,ogg,wma,aiff
       PYTHONUNBUFFERED: "1"
     volumes:
       - /playlists:/playlists

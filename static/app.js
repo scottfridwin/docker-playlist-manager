@@ -307,12 +307,29 @@ async function loadBrowser(path) {
 
         } else {
 
+            const fullPath = currentBrowsePath ? `${currentBrowsePath}/${item.name}` : item.name
+            const isChecked = checkedItems.includes(fullPath)
+
             row.innerHTML = `
         <label>
-          <input type="checkbox" onchange="browserCheckFile('${item.name}',this)">
-          ${item.name}
+          <input type="checkbox" onchange="browserCheckFile('${item.name}',this)" ${isChecked ? 'checked' : ''}>
+          🎵 ${item.name}
         </label>
       `
+
+            // Make entire row clickable (except for buttons)
+            row.addEventListener('click', (e) => {
+                // Don't trigger if clicking on buttons or the checkbox itself
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') {
+                    return
+                }
+
+                const checkbox = row.querySelector('input[type="checkbox"]')
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked
+                    browserCheckFile(item.name, checkbox)
+                }
+            })
 
         }
 

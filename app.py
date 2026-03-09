@@ -132,6 +132,12 @@ def browse_music():
     try:
         with os.scandir(target) as it:
             for entry in it:
+                # Filter out non-audio files (only for files, not directories)
+                if not entry.is_dir():
+                    ext = entry.name.rsplit('.', 1)[-1].lower() if '.' in entry.name else ''
+                    if ext not in config.AUDIO_EXTENSIONS:
+                        continue
+
                 entries.append({
                     "name": entry.name,
                     "is_dir": entry.is_dir()

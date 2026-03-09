@@ -37,6 +37,7 @@ docker-compose up -d
 
 - `PLAYLIST_DIR` (default: `/playlists`) - Directory for M3U8 playlist files
 - `MUSIC_DIR` (default: `/music`) - Path to music library directory
+- `AUDIO_EXTENSIONS` (default: `mp3,flac,wav,aac,m4a,ogg,wma,aiff`) - Comma-separated list of audio file extensions to show in the browser
 - `PYTHONUNBUFFERED` (default: `1`) - Enable unbuffered Python output
 
 ## Read-Only Container Setup

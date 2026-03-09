@@ -1,6 +1,7 @@
 import os
 import pathlib
 import logging
+import re
 from flask import Flask, jsonify, request, render_template, abort
 import config
 
@@ -9,7 +10,16 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# apply umask if configured before any files are created
+if config.UMASK is not None:
+    os.umask(config.UMASK)
+
 app = Flask(__name__)
+
+
+def strip_guid(name):
+    """Remove trailing GUID from folder names (e.g., '-12345678-1234-5678-9012-345678901234')"""
+    return re.sub(r'-[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$', '', name, flags=re.IGNORECASE)
 
 
 def playlist_path(name):
@@ -232,7 +242,7 @@ def browse_music():
                         continue
 
                 entries.append({
-                    "name": entry.name,
+                    "name": strip_guid(entry.name),
                     "is_dir": entry.is_dir()
                 })
     except PermissionError:

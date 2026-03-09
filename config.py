@@ -12,3 +12,13 @@ AUDIO_EXTENSIONS = set(ext.strip().lower() for ext in os.environ.get(
     "AUDIO_EXTENSIONS", "mp3,flac,wav,aac,m4a,ogg,wma,aiff").split(","))
 
 PAGE_SIZE = 50
+
+# Optional umask for newly-created playlist files.  Should be specified
+# as an octal string (e.g. "022" for 0o022).  A value of None means we
+# don't change the umask and use whatever the process inherited.
+UMASK = os.environ.get("UMASK")
+if UMASK is not None:
+    try:
+        UMASK = int(UMASK, 8)
+    except ValueError:
+        raise ValueError(f"Invalid UMASK value: {UMASK}")

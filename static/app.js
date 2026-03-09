@@ -317,17 +317,33 @@ async function loadBrowser(path) {
         </label>
       `
 
-            // Make entire row clickable (except for buttons)
-            row.addEventListener('click', (e) => {
-                // Don't trigger if clicking on buttons or the checkbox itself
-                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') {
-                    return
-                }
+            // Store the item name on the row for the click handler
+            row.dataset.itemName = item.name
 
+            // Make entire row clickable, but stop event propagation on interactive elements
+            const label = row.querySelector('label')
+            const checkbox = row.querySelector('input[type="checkbox"]')
+
+            if (label) {
+                label.addEventListener('click', (e) => {
+                    e.stopPropagation()
+                })
+            }
+
+            if (checkbox) {
+                checkbox.addEventListener('click', (e) => {
+                    e.stopPropagation()
+                })
+            }
+
+            // Row click handler
+            row.addEventListener('click', () => {
+                const itemName = row.dataset.itemName
                 const checkbox = row.querySelector('input[type="checkbox"]')
-                if (checkbox) {
+
+                if (checkbox && itemName) {
                     checkbox.checked = !checkbox.checked
-                    browserCheckFile(item.name, checkbox)
+                    browserCheckFile(itemName, checkbox)
                 }
             })
 

@@ -11,6 +11,4 @@ COPY . .
 
 EXPOSE 8080
 
-COPY gunicorn.conf.py /tmp/gunicorn.conf.py
-
-CMD ["gunicorn","--config","/tmp/gunicorn.conf.py","wsgi:app"]
+CMD ["gunicorn","--config","/app/gunicorn.conf.py","wsgi:app"]

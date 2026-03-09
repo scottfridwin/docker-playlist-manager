@@ -11,6 +11,10 @@ function qs(name) {
     return params.get(name)
 }
 
+function stripGuid(name) {
+    return name.replace(/\s*\([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\)/gi, '');
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 
     if (document.getElementById("list")) {
@@ -275,7 +279,7 @@ function renderTracks() {
         li.draggable = true
 
         li.innerHTML = `
-      <span class="track" title="${t}">${t}</span>
+      <span class="track" title="${t}">${stripGuid(t)}</span>
       <button class="track-remove" onclick="removeTrack(${i})">✕</button>
     `
 

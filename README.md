@@ -9,6 +9,10 @@ A web-based PWA for managing M3U8 playlists from a music library, optimized to r
 - 🔒 Runs as read-only container with minimal permissions
 - 🎯 Lightweight and fast (Flask + Gunicorn + Alpine)
 - 🛡️ Security hardened (no root, no capabilities, SELinux-compatible)
+- 🔍 Search playlists by name
+- 📦 Bulk delete multiple playlists
+- ✅ Validate playlist tracks exist
+- 📊 Health check endpoint for monitoring
 
 ## Quick Start
 
@@ -90,10 +94,13 @@ PLAYLIST_DIR=./playlists MUSIC_DIR=./music python app.py
 
 - `GET /` - Web interface
 - `GET /editor` - Playlist editor
-- `GET /api/playlists` - List all playlists
+- `GET /health` - Health check for monitoring
+- `GET /api/playlists` - List all playlists (supports `?search=term&page=1&sort=name`)
 - `GET /api/playlist/<name>` - Get playlist tracks
 - `POST /api/playlist` - Save/create playlist
 - `DELETE /api/playlist/<name>` - Delete playlist
+- `DELETE /api/playlists` - Bulk delete playlists (`{"names": ["playlist1", "playlist2"]}`)
+- `GET /api/playlist/<name>/validate` - Validate playlist tracks exist
 - `GET /api/music` - Browse music directory
 - `GET /api/dir_recursive` - Get all files recursively
 

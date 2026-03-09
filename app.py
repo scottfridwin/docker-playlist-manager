@@ -1,7 +1,13 @@
 import os
 import pathlib
-from flask import Flask, jsonify, request, render_template
+import logging
+from flask import Flask, jsonify, request, render_template, abort
 import config
+
+# Configure logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -43,11 +49,29 @@ def editor():
     return render_template("editor.html")
 
 
+@app.route("/health")
+def health():
+    """Health check endpoint for monitoring"""
+    return jsonify({"status": "healthy", "version": "1.0.0"})
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Not found", "status_code": 404}), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}")
+    return jsonify({"error": "Internal server error", "status_code": 500}), 500
+
+
 @app.route("/api/playlists")
 def playlists():
 
     sort = request.args.get("sort", "name")
     page = int(request.args.get("page", 1))
+    search = request.args.get("search", "").strip().lower()
 
     files = []
 
@@ -57,6 +81,10 @@ def playlists():
             "name": f.stem,
             "mtime": stat.st_mtime
         })
+
+    # Filter by search term
+    if search:
+        files = [f for f in files if search in f["name"].lower()]
 
     if sort == "date":
         files.sort(key=lambda x: x["mtime"], reverse=True)
@@ -69,12 +97,69 @@ def playlists():
     return jsonify({
         "items": files[start:end],
         "total": len(files),
-        "page": page
+        "page": page,
+        "search": search
     })
 
 
-@app.route("/api/playlist/<name>")
-def get_playlist(name):
+@app.route("/api/playlists", methods=["DELETE"])
+def bulk_delete_playlists():
+    """Delete multiple playlists at once"""
+    data = request.json
+    names = data.get("names", [])
+
+    if not names or not isinstance(names, list):
+        return jsonify({"error": "Invalid request: 'names' must be a non-empty list"}), 400
+
+    deleted = []
+    errors = []
+
+    for name in names:
+        try:
+            path = playlist_path(name)
+            if os.path.exists(path):
+                os.remove(path)
+                deleted.append(name)
+            else:
+                errors.append(f"Playlist '{name}' not found")
+        except (OSError, IOError) as e:
+            errors.append(f"Failed to delete '{name}': {str(e)}")
+
+    return jsonify({
+        "deleted": deleted,
+        "errors": errors,
+        "total_deleted": len(deleted),
+        "total_errors": len(errors)
+    })
+
+
+@app.route("/api/playlist/<name>/validate")
+def validate_playlist(name):
+    """Validate that all tracks in a playlist exist"""
+    path = playlist_path(name)
+
+    tracks = read_playlist(path)
+    if not tracks:
+        return jsonify({"valid": False, "missing": [], "total": 0, "error": "Playlist not found or empty"})
+
+    missing = []
+    for track in tracks:
+        # Convert relative path to absolute path
+        if track.startswith("../"):
+            track_path = os.path.join(
+                config.MUSIC_ROOT, track[3:])  # Remove "../"
+        else:
+            track_path = os.path.join(config.MUSIC_ROOT, track)
+
+        if not os.path.exists(track_path):
+            missing.append(track)
+
+    return jsonify({
+        "valid": len(missing) == 0,
+        "total_tracks": len(tracks),
+        "missing_tracks": len(missing),
+        "missing": missing
+    })
 
     path = playlist_path(name)
 

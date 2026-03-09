@@ -523,21 +523,33 @@ li {
     }
 }
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+/* Search Input */
+#search {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
-::-webkit-scrollbar-track {
+#search:focus {
+    border-color: var(--primary);
     background: var(--bg-secondary);
+    box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.1);
 }
 
-::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 4px;
+/* Bulk Actions */
+#bulk-actions {
+    border: 1px solid var(--border);
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
+#bulk-actions button {
+    margin: 0;
+}
+
+/* Playlist checkboxes */
+.playlist-checkbox {
+    margin-right: 8px;
 }

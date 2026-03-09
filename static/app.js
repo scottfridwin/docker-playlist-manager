@@ -24,6 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
 =========================== */
 
 function initIndex() {
+    const search = document.getElementById("search")
+    search.addEventListener("input", () => loadPlaylists())
+
     loadPlaylists()
 }
 
@@ -33,14 +36,20 @@ function createPlaylist() {
 
 async function loadPlaylists(page = 1) {
 
-    const r = await fetch(`/api/playlists?page=${page}&sort=name`)
+    const search = document.getElementById("search").value.trim()
+
+    const r = await fetch(`/api/playlists?page=${page}&sort=name&search=${encodeURIComponent(search)}`)
     const data = await r.json()
 
     const list = document.getElementById("list")
     list.innerHTML = ""
 
     if (data.items.length === 0) {
-        list.innerHTML = '<div class="empty-state"><p>📭 No playlists yet</p><p style="font-size: 14px;">Create your first playlist to get started!</p></div>'
+        if (search) {
+            list.innerHTML = '<div class="empty-state"><p>🔍 No playlists found</p><p style="font-size: 14px;">Try a different search term.</p></div>'
+        } else {
+            list.innerHTML = '<div class="empty-state"><p>📭 No playlists yet</p><p style="font-size: 14px;\">Create your first playlist to get started!</p></div>'
+        }
         return
     }
 
@@ -51,8 +60,13 @@ async function loadPlaylists(page = 1) {
         const date = new Date(p.mtime * 1000).toLocaleDateString()
 
         row.innerHTML = `
-      <span class="playlist-name">${p.name}</span>
-      <span class="playlist-meta">Modified: ${date}</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" class="playlist-checkbox" data-name="${p.name}">
+        <div style="flex: 1;">
+          <span class="playlist-name">${p.name}</span>
+          <span class="playlist-meta">Modified: ${date}</span>
+        </div>
+      </div>
       <div class="playlist-actions">
         <button onclick="editPlaylist('${p.name}')">Edit</button>
         <button class="danger" onclick="deletePlaylist('${p.name}')">Delete</button>
@@ -61,6 +75,31 @@ async function loadPlaylists(page = 1) {
 
         list.appendChild(row)
     })
+
+    // Add bulk actions if there are items
+    if (data.items.length > 0) {
+        const bulkActions = document.createElement("div")
+        bulkActions.id = "bulk-actions"
+        bulkActions.style.cssText = `
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        `
+        bulkActions.innerHTML = `
+            <span id="selected-count">0 selected</span>
+            <button class="danger" onclick="bulkDelete()">🗑️ Delete Selected</button>
+        `
+        list.appendChild(bulkActions)
+
+        // Show/hide bulk actions based on selections
+        document.querySelectorAll('.playlist-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateBulkActions)
+        })
+    }
 
     // Pagination
     const pager = document.getElementById("pager")
@@ -93,6 +132,51 @@ async function deletePlaylist(name) {
 
     loadPlaylists()
 
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.playlist-checkbox:checked')
+    const bulkActions = document.getElementById('bulk-actions')
+    const selectedCount = document.getElementById('selected-count')
+
+    if (bulkActions) {
+        if (checkboxes.length > 0) {
+            bulkActions.style.display = 'flex'
+            selectedCount.textContent = `${checkboxes.length} selected`
+        } else {
+            bulkActions.style.display = 'none'
+        }
+    }
+}
+
+async function bulkDelete() {
+    const checkboxes = document.querySelectorAll('.playlist-checkbox:checked')
+    const names = Array.from(checkboxes).map(cb => cb.dataset.name)
+
+    if (names.length === 0) return
+
+    if (!confirm(`Delete ${names.length} selected playlist(s)?`)) return
+
+    try {
+        const response = await fetch('/api/playlists', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ names: names })
+        })
+
+        const result = await response.json()
+
+        if (response.ok) {
+            alert(`Deleted ${result.total_deleted} playlist(s)${result.total_errors > 0 ? ` (${result.total_errors} errors)` : ''}`)
+            loadPlaylists()
+        } else {
+            alert('Error deleting playlists: ' + result.error)
+        }
+    } catch (err) {
+        alert('Error: ' + err.message)
+    }
 }
 
 /* ===========================

@@ -11,8 +11,8 @@ function qs(name) {
     return params.get(name)
 }
 
-function stripGuid(name) {
-    return name.replace(/\s*\([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\)/gi, '');
+function listError(msg) {
+    document.getElementById("browser-path").innerText = "Error: " + msg
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -336,7 +336,7 @@ function openBrowser() {
 
     const modal = document.createElement("div")
     modal.id = "browser-modal"
-    modal.onclick = (e) => {
+    modal.onclick = function (e) {
         if (e.target === modal) closeBrowser()
     }
 
@@ -370,170 +370,164 @@ function closeBrowser() {
     checkedItems = []
 }
 
-async async function loadBrowser(path) {
+async function loadBrowser(path) {
     if (path === undefined || path === null || path === "undefined") {
         path = ""
     }
 
-    let data
-    try {
-        const r = await fetch(`/api/music?path=${encodeURIComponent(path)}`)
-        if (!r.ok) {
-            throw new Error(`server returned ${r.status}`)
-        }
-        data = await r.json()
-    } catch (err) {
-        console.error("failed to load browser data", err)
-        listError("Unable to load directory contents")
-        return
-    }
+    fetch(`/api/music?path=${encodeURIComponent(path)}`)
+        .then(r => {
+            if (!r.ok) throw new Error(`server returned ${r.status}`)
+            return r.json()
+        })
+        .then(data => {
 
-    if (!data.items) {
-        console.error("browse response missing items:", data)
-        listError("Unable to load directory contents")
-        return
-    }
+            if (!data.items) {
+                console.error("browse response missing items:", data)
+                listError("Unable to load directory contents")
+                return
+            }
 
-    currentBrowsePath = data.path
+            currentBrowsePath = data.path
 
-    localStorage.setItem("browsePath", currentBrowsePath)
+            localStorage.setItem("browsePath", currentBrowsePath)
 
-    document.getElementById("browser-path").innerText = currentBrowsePath || "/"
+            document.getElementById("browser-path").innerText = currentBrowsePath || "/"
 
-    const list = document.getElementById("browser-list")
-    list.innerHTML = ""
+            const list = document.getElementById("browser-list")
+            list.innerHTML = ""
 
-    data.items.forEach(item => {
+            data.items.forEach(item => {
 
-        const row = document.createElement("div")
+                const row = document.createElement("div")
 
-        row.className = "browser-row"
+                row.className = "browser-row"
 
-        if (item.is_dir) {
+                if (item.is_dir) {
 
-            row.innerHTML = `
+                    row.innerHTML = `
         <span>📁 ${item.name}</span>
         <div class="browser-buttons">
           <button onclick="browserCheckDir('${item.name}')">Add All</button>
         </div>
       `
 
-            row.onclick = (e) => {
-                if (!e.target.closest('button')) {
-                    browserEnter(item.name)
-                }
-            }
+                    row.onclick = function (e) {
+                        if (!e.target.closest('button')) {
+                            browserEnter(item.name)
+                        }
+                    }
 
-        } else {
+                } else {
 
-            const fullPath = currentBrowsePath ? `${currentBrowsePath}/${item.name}` : item.name
-            const isChecked = checkedItems.includes(fullPath)
+                    const fullPath = currentBrowsePath ? `${currentBrowsePath}/${item.name}` : item.name
+                    const isChecked = checkedItems.includes(fullPath)
 
-            row.innerHTML = `
+                    row.innerHTML = `
         <label>
           <input type="checkbox" onchange="browserCheckFile('${item.name}',this)" ${isChecked ? 'checked' : ''}>
           🎵 ${item.name}
         </label>
       `
 
-            // Store the item name on the row for the click handler
-            row.dataset.itemName = item.name
+                    // Store the item name on the row for the click handler
+                    row.dataset.itemName = item.name
 
-            // Make entire row clickable, but stop event propagation on interactive elements
-            const label = row.querySelector('label')
-            const checkbox = row.querySelector('input[type="checkbox"]')
+                    // Make entire row clickable, but stop event propagation on interactive elements
+                    const label = row.querySelector('label')
+                    const checkbox = row.querySelector('input[type="checkbox"]')
 
-            if (label) {
-                label.addEventListener('click', (e) => {
-                    e.stopPropagation()
-                })
-            }
+                    if (label) {
+                        label.addEventListener('click', function (e) {
+                            e.stopPropagation()
+                        })
+                    }
 
-            if (checkbox) {
-                checkbox.addEventListener('click', (e) => {
-                    e.stopPropagation()
-                })
-            }
+                    if (checkbox) {
+                        checkbox.addEventListener('click', function (e) {
+                            e.stopPropagation()
+                        })
+                    }
 
-            // Row click handler
-            row.addEventListener('click', () => {
-                const itemName = row.dataset.itemName
-                const checkbox = row.querySelector('input[type="checkbox"]')
+                    // Row click handler
+                    row.addEventListener('click', function () {
+                        const itemName = row.dataset.itemName
+                        const checkbox = row.querySelector('input[type="checkbox"]')
 
-                if (checkbox && itemName) {
-                    checkbox.checked = !checkbox.checked
-                    browserCheckFile(itemName, checkbox)
+                        if (checkbox && itemName) {
+                            checkbox.checked = !checkbox.checked
+                            browserCheckFile(itemName, checkbox)
+                        }
+                    })
+
                 }
+
+                list.appendChild(row)
+
             })
 
         }
 
-        list.appendChild(row)
-
-    })
-
-}
-
 function browserEnter(name) {
 
-    const next = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
+                const next = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
 
-    loadBrowser(next)
+                loadBrowser(next)
 
-}
+            }
 
 function browserUp() {
 
-    if (!currentBrowsePath) {
-        return
-    }
+                if (!currentBrowsePath) {
+                    return
+                }
 
-    const parts = currentBrowsePath.split("/")
-    parts.pop()
+                const parts = currentBrowsePath.split("/")
+                parts.pop()
 
-    const next = parts.join("/")
+                const next = parts.join("/")
 
-    loadBrowser(next)
+                loadBrowser(next)
 
-}
+            }
 
 function browserCheckFile(name, cb) {
 
-    const full = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
+                const full = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
 
-    if (cb.checked) {
-        checkedItems.push(full)
-    } else {
-        checkedItems = checkedItems.filter(x => x !== full)
-    }
+                if (cb.checked) {
+                    checkedItems.push(full)
+                } else {
+                    checkedItems = checkedItems.filter(x => x !== full)
+                }
 
-}
+            }
 
 async function browserCheckDir(name) {
 
-    const full = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
+                const full = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
 
-    const r = await fetch(`/api/dir_recursive?path=${encodeURIComponent(full)}`)
-    const files = await r.json()
+                const r = await fetch(`/api/dir_recursive?path=${encodeURIComponent(full)}`)
+                const files = await r.json()
 
-    files.forEach(f => checkedItems.push(f))
+                files.forEach(f => checkedItems.push(f))
 
-}
+            }
 
 function browserAdd() {
 
-    checkedItems.forEach(p => {
+                checkedItems.forEach(p => {
 
-        if (!p.startsWith("../")) {
-            p = "../" + p
-        }
+                    if (!p.startsWith("../")) {
+                        p = "../" + p
+                    }
 
-        currentTracks.push(p)
+                    currentTracks.push(p)
 
-    })
+                })
 
-    closeBrowser()
+                closeBrowser()
 
-    renderTracks()
+                renderTracks()
 
-}
+            }

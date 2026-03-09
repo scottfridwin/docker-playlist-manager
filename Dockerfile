@@ -11,4 +11,6 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["gunicorn","--bind","0.0.0.0:8080","--workers","2","--threads","4","--worker-tmp-dir","/tmp","--log-file","-","--error-logfile","-","--capture-output","--disable-redirect-access-to-syslog","--pid","/tmp/gunicorn.pid","--controlplane","off","wsgi:app"]
+COPY gunicorn.conf.py /tmp/gunicorn.conf.py
+
+CMD ["gunicorn","--config","/tmp/gunicorn.conf.py","wsgi:app"]

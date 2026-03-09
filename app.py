@@ -171,6 +171,13 @@ def validate_playlist(name):
     })
 
 
+@app.route("/api/playlist/<name>", methods=["GET"])
+def get_playlist(name):
+    path = playlist_path(name)
+    tracks = read_playlist(path)
+    return jsonify({"name": name, "tracks": tracks})
+
+
 @app.route("/api/playlist", methods=["POST"])
 def save_playlist():
 

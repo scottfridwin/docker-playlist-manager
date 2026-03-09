@@ -11,6 +11,10 @@ function qs(name) {
     return params.get(name)
 }
 
+function stripGuid(name) {
+    return name.replace(/\s*\([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\)/gi, '');
+}
+
 function listError(msg) {
     document.getElementById("browser-path").innerText = "Error: " + msg
 }
@@ -370,7 +374,7 @@ function closeBrowser() {
     checkedItems = []
 }
 
-async function loadBrowser(path) {
+function loadBrowser(path) {
     if (path === undefined || path === null || path === "undefined") {
         path = ""
     }
@@ -408,7 +412,7 @@ async function loadBrowser(path) {
                     row.innerHTML = `
         <span>📁 ${item.name}</span>
         <div class="browser-buttons">
-          <button onclick="browserCheckDir('${item.name}')">Add All</button>
+          <button onclick="browserCheckDir('${item.name.replace(/'/g, "\\'")}')">Add All</button>
         </div>
       `
 
@@ -425,7 +429,7 @@ async function loadBrowser(path) {
 
                     row.innerHTML = `
         <label>
-          <input type="checkbox" onchange="browserCheckFile('${item.name}',this)" ${isChecked ? 'checked' : ''}>
+          <input type="checkbox" onchange="browserCheckFile('${item.name.replace(/'/g, "\\'")}',this)" ${isChecked ? 'checked' : ''}>
           🎵 ${item.name}
         </label>
       `
@@ -466,68 +470,74 @@ async function loadBrowser(path) {
 
             })
 
-        }
+                .catch(err => {
+                    console.error("failed to load browser data", err)
+                    listError("Unable to load directory contents")
+                })
+
+        })
+}
 
 function browserEnter(name) {
 
-                const next = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
+    const next = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
 
-                loadBrowser(next)
+    loadBrowser(next)
 
-            }
+}
 
 function browserUp() {
 
-                if (!currentBrowsePath) {
-                    return
-                }
+    if (!currentBrowsePath) {
+        return
+    }
 
-                const parts = currentBrowsePath.split("/")
-                parts.pop()
+    const parts = currentBrowsePath.split("/")
+    parts.pop()
 
-                const next = parts.join("/")
+    const next = parts.join("/")
 
-                loadBrowser(next)
+    loadBrowser(next)
 
-            }
+}
 
 function browserCheckFile(name, cb) {
 
-                const full = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
+    const full = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
 
-                if (cb.checked) {
-                    checkedItems.push(full)
-                } else {
-                    checkedItems = checkedItems.filter(x => x !== full)
-                }
+    if (cb.checked) {
+        checkedItems.push(full)
+    } else {
+        checkedItems = checkedItems.filter(x => x !== full)
+    }
 
-            }
+}
 
 async function browserCheckDir(name) {
 
-                const full = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
+    const full = currentBrowsePath ? `${currentBrowsePath}/${name}` : name
 
-                const r = await fetch(`/api/dir_recursive?path=${encodeURIComponent(full)}`)
-                const files = await r.json()
+    const r = await fetch(`/api/dir_recursive?path=${encodeURIComponent(full)}`)
+    const files = await r.json()
 
-                files.forEach(f => checkedItems.push(f))
+    files.forEach(f => checkedItems.push(f))
 
-            }
+}
 
 function browserAdd() {
 
-                checkedItems.forEach(p => {
+    checkedItems.forEach(p => {
 
-                    if (!p.startsWith("../")) {
-                        p = "../" + p
-                    }
+        if (!p.startsWith("../")) {
+            p = "../" + p
+        }
 
-                    currentTracks.push(p)
+        currentTracks.push(p)
 
-                })
+    })
 
-                closeBrowser()
+    closeBrowser()
 
-                renderTracks()
+    renderTracks()
 
-            }
+}

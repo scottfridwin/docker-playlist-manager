@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["gunicorn","--config","/app/gunicorn.conf.py","wsgi:app"]
+CMD ["waitress-serve","--port=8080","wsgi:app"]

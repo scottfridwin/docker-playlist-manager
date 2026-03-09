@@ -3,6 +3,7 @@ let checkedItems = []
 let currentBrowsePath = localStorage.getItem("browsePath")
 if (!currentBrowsePath || currentBrowsePath === "undefined") {
     currentBrowsePath = ""
+    localStorage.setItem("browsePath", currentBrowsePath)  // reset to empty
 }
 
 function qs(name) {
@@ -409,10 +410,15 @@ async async function loadBrowser(path) {
             row.innerHTML = `
         <span>📁 ${item.name}</span>
         <div class="browser-buttons">
-          <button onclick="browserEnter('${item.name}')">Open</button>
           <button onclick="browserCheckDir('${item.name}')">Add All</button>
         </div>
       `
+
+            row.onclick = (e) => {
+                if (!e.target.closest('button')) {
+                    browserEnter(item.name)
+                }
+            }
 
         } else {
 

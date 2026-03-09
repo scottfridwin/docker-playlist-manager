@@ -361,10 +361,16 @@ function closeBrowser() {
     checkedItems = []
 }
 
-async function loadBrowser(path) {
+async async function loadBrowser(path) {
 
     const r = await fetch(`/api/music?path=${encodeURIComponent(path)}`)
     const data = await r.json()
+
+    if (!data.items) {
+        console.error("browse response missing items:", data)
+        listError("Unable to load directory contents")
+        return
+    }
 
     currentBrowsePath = data.path
 
@@ -384,9 +390,11 @@ async function loadBrowser(path) {
         if (item.is_dir) {
 
             row.innerHTML = `
-        📁 ${item.name}
-        <button onclick="browserEnter('${item.name}')">Open</button>
-        <button onclick="browserCheckDir('${item.name}')">Add All</button>
+        <span>📁 ${item.name}</span>
+        <div class="browser-buttons">
+          <button onclick="browserEnter('${item.name}')">Open</button>
+          <button onclick="browserCheckDir('${item.name}')">Add All</button>
+        </div>
       `
 
         } else {

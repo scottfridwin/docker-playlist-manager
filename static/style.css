@@ -442,6 +442,10 @@ li {
     flex-shrink: 0;
 }
 
+.browser-buttons {
+    display: flex;
+    gap: 6px;
+}
 .browser-footer {
     display: flex;
     gap: 8px;

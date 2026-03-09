@@ -73,15 +73,15 @@ async function loadPlaylists(page = 1) {
 
         row.innerHTML = `
       <div style="display: flex; align-items: center; gap: 8px;">
-        <input type="checkbox" class="playlist-checkbox" data-name="${p.name}">
+        <input type="checkbox" class="playlist-checkbox" data-name="${p.name.replace(/"/g, '&quot;')}">
         <div style="flex: 1;">
           <span class="playlist-name">${p.name}</span>
           <span class="playlist-meta">Modified: ${date}</span>
         </div>
       </div>
       <div class="playlist-actions">
-        <button onclick="editPlaylist('${p.name}')">Edit</button>
-        <button class="danger" onclick="deletePlaylist('${p.name}')">Delete</button>
+        <button onclick="editPlaylist('${p.name.replace(/'/g, "\\'")}')">Edit</button>
+        <button class="danger" onclick="deletePlaylist('${p.name.replace(/'/g, "\\'")}')">Delete</button>
       </div>
     `
 

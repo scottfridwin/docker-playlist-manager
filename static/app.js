@@ -1,6 +1,9 @@
 let currentTracks = []
 let checkedItems = []
-let currentBrowsePath = localStorage.getItem("browsePath") || ""
+let currentBrowsePath = localStorage.getItem("browsePath")
+if (!currentBrowsePath || currentBrowsePath === "undefined") {
+    currentBrowsePath = ""
+}
 
 function qs(name) {
     const params = new URLSearchParams(window.location.search)

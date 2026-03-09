@@ -352,7 +352,8 @@ function openBrowser() {
 
     document.body.appendChild(modal)
 
-    loadBrowser(currentBrowsePath)
+    // ensure we never pass undefined
+    loadBrowser(currentBrowsePath || "")
 
 }
 
@@ -362,9 +363,22 @@ function closeBrowser() {
 }
 
 async async function loadBrowser(path) {
+    if (path === undefined || path === null) {
+        path = ""
+    }
 
-    const r = await fetch(`/api/music?path=${encodeURIComponent(path)}`)
-    const data = await r.json()
+    let data
+    try {
+        const r = await fetch(`/api/music?path=${encodeURIComponent(path)}`)
+        if (!r.ok) {
+            throw new Error(`server returned ${r.status}`)
+        }
+        data = await r.json()
+    } catch (err) {
+        console.error("failed to load browser data", err)
+        listError("Unable to load directory contents")
+        return
+    }
 
     if (!data.items) {
         console.error("browse response missing items:", data)

@@ -2,30 +2,47 @@
 <html>
 
 <head>
-
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Edit playlists">
+    <title>Playlist Editor</title>
 
     <link rel="stylesheet" href="/static/style.css">
-
 </head>
 
 <body>
+    <div class="container">
+        <h1>✏️ Playlist Editor</h1>
 
-    <input id="playlist-name" placeholder="Playlist name">
+        <div class="editor-container">
+            <div class="editor-main">
+                <div class="form-group">
+                    <label for="playlist-name">Playlist Name</label>
+                    <input id="playlist-name" type="text" placeholder="Enter playlist name...">
+                </div>
 
-    <ul id="tracks"></ul>
+                <div class="form-group">
+                    <div class="track-list-header">
+                        <h3>Tracks (<span id="track-count">0</span>)</h3>
+                    </div>
+                    <ul id="tracks" class="track-list"></ul>
+                </div>
+            </div>
 
-    <button onclick="openBrowser()">Add Tracks</button>
-
-    <br><br>
-
-    <button onclick="save()">Save</button>
-    <button onclick="cancel()">Cancel</button>
+            <div class="editor-sidebar">
+                <button onclick="openBrowser()">➕ Add Tracks</button>
+                <button class="secondary" onclick="cancel()">✕ Cancel</button>
+                <button class="primary" onclick="save()">💾 Save</button>
+            </div>
+        </div>
+    </div>
 
     <script src="/static/app.js"></script>
     <script>
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/static/sw.js");
+            navigator.serviceWorker.register("/static/sw.js").catch(err => {
+                console.log("ServiceWorker registration failed:", err);
+            });
         }
     </script>
 </body>

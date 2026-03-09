@@ -6,7 +6,7 @@
     "display": "standalone",
     "background_color": "#121212",
     "theme_color": "#1db954",
-    "description": "Manage M3U playlists from your music library",
+    "description": "Manage M3U8 playlists from your music library",
     "icons": [
         {
             "src": "/static/icon-192.png",

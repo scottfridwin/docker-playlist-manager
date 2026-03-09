@@ -54,7 +54,7 @@ jobs:
 
           labels: |
             org.opencontainers.image.title=Playlist Manager
-            org.opencontainers.image.description=Web UI for managing M3U playlists stored on disk
+            org.opencontainers.image.description=Web UI for managing M3U8 playlists stored on disk
             org.opencontainers.image.source=${{ github.repository }}
             org.opencontainers.image.licenses=MIT
 

@@ -2,33 +2,37 @@
 <html>
 
 <head>
-
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Manage M3U8 playlists from your music library">
+    <title>Playlist Manager</title>
 
     <link rel="manifest" href="/static/manifest.json">
     <link rel="stylesheet" href="/static/style.css">
-
 </head>
 
 <body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>🎵 Playlists</h1>
+            </div>
+            <div class="header-right">
+                <button onclick="createPlaylist()">+ New Playlist</button>
+            </div>
+        </div>
 
-    <h1>Playlists</h1>
+        <div id="list" class="playlist-grid"></div>
 
-    <button onclick="createPlaylist()">New Playlist</button>
-
-    <select id="sort">
-        <option value="name">Sort by name</option>
-        <option value="date">Sort by modified</option>
-    </select>
-
-    <div id="list"></div>
-
-    <div id="pager"></div>
+        <div id="pager" class="pager"></div>
+    </div>
 
     <script src="/static/app.js"></script>
     <script>
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/static/sw.js");
+            navigator.serviceWorker.register("/static/sw.js").catch(err => {
+                console.log("ServiceWorker registration failed:", err);
+            });
         }
     </script>
 </body>

@@ -59,7 +59,7 @@ playlist_dir.mkdir(exist_ok=True)
 print("Generating playlists...")
 
 for i in range(1, NUM_PLAYLISTS+1):
-    playlist_name = f"Playlist_{i}.m3u"
+    playlist_name = f"Playlist_{i}.m3u8"
     num_tracks = random.randint(*TRACKS_PER_PLAYLIST)
     selected_tracks = random.sample(
         all_tracks, min(num_tracks, len(all_tracks)))
@@ -74,13 +74,13 @@ print(f"Generated {NUM_PLAYLISTS} playlists.")
 
 # Step 3: Add edge cases
 # Duplicate songs in a playlist
-dup_playlist = playlist_dir / "duplicates.m3u"
+dup_playlist = playlist_dir / "duplicates.m3u8"
 with open(dup_playlist, "w") as f:
     f.write("#EXTM3U\n")
     for _ in range(5):
         f.write(f"{random.choice(all_tracks)}\n")
 
 # Empty playlist
-(playlist_dir / "empty.m3u").touch()
+(playlist_dir / "empty.m3u8").touch()
 
 print("Mock music library with realistic edge cases created!")

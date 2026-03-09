@@ -1,25 +1,24 @@
-version: "3.9"
-
 services:
-
   playlist-manager:
-
-    build: .
-
+    image: ghcr.io/scottfridwin/playlist-manager:main
+    container_name: playlist-manager
     user: "1234:5678"
-
     read_only: true
-
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     tmpfs:
       - /tmp
-
+      - /var/run
+      - /var/tmp
     ports:
       - "8080:8080"
-
     environment:
       PLAYLIST_DIR: /playlists
       MUSIC_DIR: /music
-
+      PYTHONUNBUFFERED: "1"
     volumes:
-      - ./playlists:/playlists
-      - /mnt/music:/music:ro
+      - /playlists:/playlists
+      - /music:/music:ro
+    restart: unless-stopped

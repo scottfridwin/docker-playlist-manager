@@ -24,13 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 =========================== */
 
 function initIndex() {
-
-    const sort = document.getElementById("sort")
-
-    sort.addEventListener("change", () => loadPlaylists())
-
     loadPlaylists()
-
 }
 
 function createPlaylist() {
@@ -39,29 +33,49 @@ function createPlaylist() {
 
 async function loadPlaylists(page = 1) {
 
-    const sort = document.getElementById("sort").value
-
-    const r = await fetch(`/api/playlists?page=${page}&sort=${sort}`)
+    const r = await fetch(`/api/playlists?page=${page}&sort=name`)
     const data = await r.json()
 
     const list = document.getElementById("list")
     list.innerHTML = ""
 
+    if (data.items.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>📭 No playlists yet</p><p style="font-size: 14px;">Create your first playlist to get started!</p></div>'
+        return
+    }
+
     data.items.forEach(p => {
-
         const row = document.createElement("div")
-
         row.className = "playlist-row"
+
+        const date = new Date(p.mtime * 1000).toLocaleDateString()
 
         row.innerHTML = `
       <span class="playlist-name">${p.name}</span>
-      <button onclick="editPlaylist('${p.name}')">Edit</button>
-      <button onclick="deletePlaylist('${p.name}')">Delete</button>
+      <span class="playlist-meta">Modified: ${date}</span>
+      <div class="playlist-actions">
+        <button onclick="editPlaylist('${p.name}')">Edit</button>
+        <button class="danger" onclick="deletePlaylist('${p.name}')">Delete</button>
+      </div>
     `
 
         list.appendChild(row)
-
     })
+
+    // Pagination
+    const pager = document.getElementById("pager")
+    pager.innerHTML = ""
+    const totalPages = Math.ceil(data.total / 50)
+
+    if (totalPages > 1) {
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement("button")
+            btn.textContent = i
+            if (i === page) btn.className = "active"
+            btn.onclick = () => loadPlaylists(i)
+            pager.appendChild(btn)
+        }
+    }
 
 }
 
@@ -111,24 +125,42 @@ function cancel() {
 async function save() {
 
     const name = document.getElementById("playlist-name").value.trim()
+    const btn = event.target
 
     if (!name) {
-        alert("Playlist name required")
+        alert("Please enter a playlist name")
         return
     }
 
-    await fetch("/api/playlist", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            name: name,
-            tracks: currentTracks
-        })
-    })
+    btn.disabled = true
+    btn.textContent = "💾 Saving..."
 
-    window.location.href = "/"
+    try {
+        const response = await fetch("/api/playlist", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: name,
+                tracks: currentTracks
+            })
+        })
+
+        if (!response.ok) {
+            const error = await response.json()
+            alert("Error saving playlist: " + (error.error || "Unknown error"))
+            btn.disabled = false
+            btn.textContent = "💾 Save"
+            return
+        }
+
+        window.location.href = "/"
+    } catch (err) {
+        alert("Error: " + err.message)
+        btn.disabled = false
+        btn.textContent = "💾 Save"
+    }
 
 }
 
@@ -139,37 +171,58 @@ async function save() {
 function renderTracks() {
 
     const ul = document.getElementById("tracks")
+    const count = document.getElementById("track-count")
     ul.innerHTML = ""
+    count.textContent = currentTracks.length
+
+    if (currentTracks.length === 0) {
+        ul.innerHTML = '<div style="padding: 32px 16px; text-align: center; color: var(--text-secondary);">No tracks yet. Click "Add Tracks" to get started.</div>'
+        return
+    }
 
     currentTracks.forEach((t, i) => {
 
         const li = document.createElement("li")
-
+        li.className = "track-item"
         li.draggable = true
 
         li.innerHTML = `
-      <span class="track">${t}</span>
-      <button onclick="removeTrack(${i})">✕</button>
+      <span class="track" title="${t}">${t}</span>
+      <button class="track-remove" onclick="removeTrack(${i})">✕</button>
     `
 
         li.addEventListener("dragstart", e => {
+            e.dataTransfer.effectAllowed = "move"
             e.dataTransfer.setData("index", i)
+            e.target.style.opacity = "0.5"
+        })
+
+        li.addEventListener("dragend", e => {
+            e.target.style.opacity = "1"
         })
 
         li.addEventListener("dragover", e => {
             e.preventDefault()
+            e.dataTransfer.dropEffect = "move"
+            li.style.borderTop = "2px solid var(--primary)"
+        })
+
+        li.addEventListener("dragleave", e => {
+            li.style.borderTop = "none"
         })
 
         li.addEventListener("drop", e => {
             e.preventDefault()
+            li.style.borderTop = "none"
 
-            const from = e.dataTransfer.getData("index")
+            const from = parseInt(e.dataTransfer.getData("index"))
             const to = i
 
-            const item = currentTracks.splice(from, 1)[0]
-            currentTracks.splice(to, 0, item)
-
-            renderTracks()
+            if (from !== to) {
+                const item = currentTracks.splice(from, 1)[0]
+                currentTracks.splice(to, 0, item)
+                renderTracks()
+            }
         })
 
         ul.appendChild(li)
@@ -191,20 +244,23 @@ function openBrowser() {
 
     const modal = document.createElement("div")
     modal.id = "browser-modal"
+    modal.onclick = (e) => {
+        if (e.target === modal) closeBrowser()
+    }
 
     modal.innerHTML = `
     <div class="browser">
 
       <div class="browser-header">
-        <button onclick="browserUp()">Up</button>
-        <span id="browser-path"></span>
+        <button onclick="browserUp()">⬆️ Up</button>
+        <span id="browser-path">Loading...</span>
       </div>
 
-      <div id="browser-list"></div>
+      <div id="browser-list" class="browser-list"></div>
 
       <div class="browser-footer">
-        <button onclick="browserAdd()">Add Selected</button>
-        <button onclick="closeBrowser()">Cancel</button>
+        <button onclick="browserAdd()">✓ Add Selected</button>
+        <button class="secondary" onclick="closeBrowser()">✕ Close</button>
       </div>
 
     </div>

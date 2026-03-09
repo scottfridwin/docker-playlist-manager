@@ -5,6 +5,7 @@ import config
 
 app = Flask(__name__)
 
+
 def playlist_path(name):
     safe = "".join(c for c in name if c.isascii() and c not in "/\\")
     return os.path.join(config.PLAYLIST_ROOT, safe + ".m3u8")
@@ -96,9 +97,11 @@ def save_playlist():
 
     path = playlist_path(name)
 
-    write_playlist(path, tracks)
-
-    return jsonify({"status": "ok"})
+    try:
+        write_playlist(path, tracks)
+        return jsonify({"status": "ok"})
+    except (OSError, IOError) as e:
+        return jsonify({"error": f"Failed to save playlist: {str(e)}"}), 500
 
 
 @app.route("/api/playlist/<name>", methods=["DELETE"])
@@ -106,10 +109,12 @@ def delete_playlist(name):
 
     path = playlist_path(name)
 
-    if os.path.exists(path):
-        os.remove(path)
-
-    return jsonify({"status": "deleted"})
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+        return jsonify({"status": "deleted"})
+    except (OSError, IOError) as e:
+        return jsonify({"error": f"Failed to delete playlist: {str(e)}"}), 500
 
 
 @app.route("/api/music")

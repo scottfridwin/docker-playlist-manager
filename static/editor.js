@@ -1,104 +1,158 @@
 /* ===========================
-   EDITOR PAGE
+   editor.js
 =========================== */
 
-async function initEditor() {
+let currentPlaylist = null;
+let currentTracks = []; // Tracks currently in the editor
 
-    const name = qs("name")
+function initEditor(name = null) {
+    currentPlaylist = name;
+    currentTracks = [];
 
-    if (name) {
+    const container = document.getElementById("editor-container");
+    if (!container) return;
 
-        const r = await fetch(`/api/playlist/${encodeURIComponent(name)}`)
-        const data = await r.json()
+    container.innerHTML = "";
 
-        document.getElementById("playlist-name").value = data.name
-        currentTracks = data.tracks
-    }
+    const title = name ? `Editing Playlist: ${name}` : "New Playlist";
 
-    renderTracks()
+    container.innerHTML = `
+        <div class="editor-header">
+            <h2>${title}</h2>
+            <div style="margin-left:auto; display:flex; gap:8px;">
+                <button onclick="backToPlaylists()">
+                    <span class="material-icons">arrow_back</span> Back
+                </button>
+                <button onclick="openBrowser()">Add Tracks</button>
+                <button class="danger" onclick="savePlaylist()">Save</button>
+            </div>
+        </div>
 
+        <div class="editor-main">
+            <div id="track-list" class="track-list"></div>
+        </div>
+    `;
+
+    if (name) loadPlaylistTracks(name);
 }
 
-function cancel() {
-    window.location.href = "/"
+// Load existing tracks from API
+async function loadPlaylistTracks(name) {
+    try {
+        const r = await fetch(`/api/playlist/${encodeURIComponent(name)}`);
+        const data = await r.json();
+
+        currentTracks = data.tracks || [];
+        renderTracks();
+    } catch (err) {
+        console.error("Failed to load tracks:", err);
+        toast("Failed to load playlist tracks");
+    }
 }
 
-async function save() {
+// Render tracks in editor
+function renderTracks() {
+    const list = document.getElementById("track-list");
+    if (!list) return;
 
-    const name = document.getElementById("playlist-name").value.trim()
+    list.innerHTML = "";
 
-    if (!name) {
-        alert("Please enter a playlist name")
-        return
+    currentTracks.forEach((track, i) => {
+        const div = document.createElement("div");
+        div.className = "track-item";
+        div.draggable = true;
+        div.dataset.index = i;
+
+        div.innerHTML = `
+            <span class="track">${stripGuid(track)}</span>
+            <button class="track-remove" onclick="removeTrack(${i})">
+                <span class="material-icons">close</span>
+            </button>
+        `;
+
+        // Drag & drop events
+        div.addEventListener("dragstart", dragStart);
+        div.addEventListener("dragover", dragOver);
+        div.addEventListener("drop", dropTrack);
+        div.addEventListener("dragend", dragEnd);
+
+        list.appendChild(div);
+    });
+}
+
+// Track removal
+function removeTrack(index) {
+    currentTracks.splice(index, 1);
+    renderTracks();
+}
+
+// Drag & Drop
+let draggedIndex = null;
+
+function dragStart(e) {
+    draggedIndex = parseInt(e.currentTarget.dataset.index);
+    e.dataTransfer.effectAllowed = "move";
+}
+
+function dragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+}
+
+function dropTrack(e) {
+    e.preventDefault();
+    const targetIndex = parseInt(e.currentTarget.dataset.index);
+
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    const [moved] = currentTracks.splice(draggedIndex, 1);
+    currentTracks.splice(targetIndex, 0, moved);
+
+    renderTracks();
+}
+
+function dragEnd() {
+    draggedIndex = null;
+}
+
+// Save playlist
+async function savePlaylist() {
+    if (!currentPlaylist) {
+        currentPlaylist = prompt("Enter new playlist name:");
+        if (!currentPlaylist) return;
     }
 
-    const response = await fetch("/api/playlist", {
+    try {
+        await fetch(`/api/playlist/${encodeURIComponent(currentPlaylist)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tracks: currentTracks })
+        });
 
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            name: name,
-            tracks: currentTracks
-        })
-
-    })
-
-    if (!response.ok) {
-        alert("Error saving playlist")
-        return
+        toast(`Playlist "${currentPlaylist}" saved!`);
+    } catch (err) {
+        console.error("Failed to save playlist:", err);
+        toast("Failed to save playlist");
     }
+}
 
-    window.location.href = "/"
+// Back to playlists
+function backToPlaylists() {
+    showPage("page-playlists");
+    loadPlaylists();
+}
 
+// Open browser modal
+function openBrowser() {
+    showPage("browser-modal");
+    loadBrowser(""); // your existing browser code
 }
 
 /* ===========================
-   TRACK LIST
+   SPA Helper
 =========================== */
-
-function renderTracks() {
-
-    const ul = document.getElementById("tracks")
-    const count = document.getElementById("track-count")
-
-    ul.innerHTML = ""
-
-    count.textContent = currentTracks.length
-
-    if (currentTracks.length === 0) {
-
-        ul.innerHTML = `<div style="padding:16px;">No tracks yet</div>`
-
-        return
-    }
-
-    currentTracks.forEach((t, i) => {
-
-        const li = document.createElement("li")
-        li.className = "track-item"
-
-        li.innerHTML = `
-        <span class="track">${stripGuid(t)}</span>
-
-        <button onclick="removeTrack(${i})">
-            <span class="material-icons">close</span>
-        </button>
-        `
-
-        ul.appendChild(li)
-
-    })
-
-}
-
-function removeTrack(i) {
-
-    currentTracks.splice(i, 1)
-
-    renderTracks()
-
+function showPage(id) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    const page = document.getElementById(id);
+    if (page) page.classList.add("active");
 }

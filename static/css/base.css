@@ -57,3 +57,48 @@ h2 {
     font-weight: 600;
     margin-bottom: 16px;
 }
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.track-list {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 300px;
+    max-height: 600px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.track-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: grab;
+}
+
+.track-item:active {
+    cursor: grabbing;
+}
+
+.track-remove {
+    background: var(--error);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    padding: 6px 10px;
+    cursor: pointer;
+}

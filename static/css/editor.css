@@ -15,6 +15,28 @@
     gap: 16px;
 }
 
+.editor-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.editor-header h2 {
+    margin: 0;
+}
+
+.editor-header>div {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+}
+
+.editor-header button {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -62,7 +84,6 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 12px;
-    margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -94,18 +115,35 @@
 .track-remove {
     background: var(--error);
     border: none;
-    padding: 6px 10px;
-    border-radius: 4px;
-    color: white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    /* inline-flex helps it size naturally in flow */
+    justify-content: center;
+    /* horizontal center */
+    align-items: center;
+    /* vertical center */
+    padding: 0;
     cursor: pointer;
-    font-weight: 600;
-    font-size: 12px;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
+    font-size: 20px;
+    line-height: 1;
+    /* prevents vertical shift of the icon */
+    transition: background 0.2s ease;
 }
 
 .track-remove:hover {
     background: #c0392b;
+    /* slightly lighter on hover */
+}
+
+.track-remove .material-icons {
+    display: block;
+    /* removes inline spacing issues */
+    text-align: center;
+    transform: translateX(1px);
+    /* small nudge to visually center the glyph */
+    margin-right: 2px;
 }
 
 .editor-sidebar {
@@ -116,4 +154,9 @@
 
 .editor-sidebar button {
     width: 100%;
+}
+
+.editor-main .track-list {
+    max-height: none;
+    overflow-y: visible;
 }

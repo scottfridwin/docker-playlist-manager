@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -7,8 +7,13 @@
     <meta name="description" content="Manage M3U8 playlists from your music library">
     <title>Playlist Manager</title>
 
+    <!-- Material icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- PWA manifest -->
     <link rel="manifest" href="/static/manifest.json">
+
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/buttons.css">
     <link rel="stylesheet" href="/static/css/inputs.css">
@@ -20,36 +25,51 @@
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-left">
-                <h1>
-                    <span class="material-icons">library_music</span>
-                    Playlists
-                </h1>
-            </div>
-
-            <div class="header-right">
-                <div class="search-field">
-                    <span class="material-icons">search</span>
-                    <input type="text" id="search" placeholder="Search playlists...">
+    <div id="app">
+        <!-- Playlists page -->
+        <div id="page-playlists" class="page active">
+            <div class="container">
+                <div class="header">
+                    <div class="header-left">
+                        <h1><span class="material-icons">library_music</span> Playlists</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="search-field">
+                            <span class="material-icons">search</span>
+                            <input type="text" id="search" placeholder="Search playlists...">
+                        </div>
+                        <button onclick="createPlaylist()">
+                            <span class="material-icons">add</span> New Playlist
+                        </button>
+                    </div>
                 </div>
 
-                <button onclick="createPlaylist()">
-                    <span class="material-icons">add</span>
-                    New Playlist
-                </button>
+                <!-- Dynamic playlist grid -->
+                <div id="list" class="playlist-grid"></div>
+
+                <!-- Pager for playlists -->
+                <div id="pager" class="pager"></div>
             </div>
         </div>
 
-        <!-- Playlist container -->
-        <div id="list"></div>
+        <!-- Editor page -->
+        <div id="page-editor" class="page">
+            <div class="container">
+                <div id="editor-container"></div>
+            </div>
+        </div>
 
-        <div id="pager" class="pager"></div>
+        <!-- Browser modal page -->
+        <!-- <div id="browser-modal" class="page">
+            <div class="container">
+                <div id="browser-container"></div>
+            </div>
+        </div> -->
     </div>
 
     <!-- App scripts -->
     <script src="/static/app.js"></script>
+    <script src="/static/spa-router.js"></script>
     <script src="/static/playlists.js"></script>
     <script src="/static/editor.js"></script>
 
@@ -59,13 +79,13 @@
     <script src="/static/browser/browser-selection.js"></script>
 
     <script>
+        // Register service worker
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/static/sw.js").catch(err => {
-                console.log("ServiceWorker registration failed:", err);
-            });
+            navigator.serviceWorker.register("/static/sw.js")
+                .catch(err => console.log("ServiceWorker registration failed:", err));
         }
 
-        // Initialize index page after DOM loads
+        // Initialize playlists page
         window.addEventListener("DOMContentLoaded", initIndex);
     </script>
 </body>

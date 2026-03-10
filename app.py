@@ -249,7 +249,8 @@ def browse_music():
                         continue
 
                 entries.append({
-                    "name": strip_guid(entry.name),
+                    "name": entry.name,            # real filesystem name
+                    "display": strip_guid(entry.name),  # clean UI name
                     "is_dir": entry.is_dir()
                 })
     except PermissionError:

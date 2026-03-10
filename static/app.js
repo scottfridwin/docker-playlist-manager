@@ -410,7 +410,7 @@ function loadBrowser(path) {
                 if (item.is_dir) {
 
                     row.innerHTML = `
-        <span>📁 ${item.name}</span>
+        <span>📁 ${item.display || item.name}</span>
         <div class="browser-buttons">
           <button onclick="browserCheckDir('${item.name.replace(/'/g, "\\'")}')">Add All</button>
         </div>
@@ -430,7 +430,7 @@ function loadBrowser(path) {
                     row.innerHTML = `
         <label>
           <input type="checkbox" onchange="browserCheckFile('${item.name.replace(/'/g, "\\'")}',this)" ${isChecked ? 'checked' : ''}>
-          🎵 ${item.name}
+          🎵 ${item.display || item.name}
         </label>
       `
 

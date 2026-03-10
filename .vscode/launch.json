@@ -8,7 +8,7 @@
             "program": "${workspaceFolder}/app.py",
             "console": "integratedTerminal",
             "env": {
-                "PLAYLIST_DIR": "${workspaceFolder}/playlists",
+                "PLAYLIST_DIR": "${workspaceFolder}/music/Playlists",
                 "MUSIC_DIR": "${workspaceFolder}/music"
             },
             "justMyCode": true

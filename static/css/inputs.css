@@ -1,0 +1,62 @@
+/* ===========================
+   INPUTS / SELECTS / TEXTAREAS
+=========================== */
+
+input,
+select,
+textarea {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.1);
+}
+
+input::placeholder {
+    color: var(--text-secondary);
+}
+
+select {
+    cursor: pointer;
+}
+
+/* search field */
+.search-field {
+    display: flex;
+    align-items: center;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin-right: 12px;
+}
+
+.search-field .material-icons {
+    font-size: 20px;
+    color: var(--text-secondary);
+    margin-right: 6px;
+}
+
+.search-field input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 200px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.search-field input::placeholder {
+    color: var(--text-secondary);
+}

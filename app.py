@@ -53,6 +53,8 @@ def write_playlist(path, tracks):
     with open(path, "w") as f:
         f.write("#EXTM3U\n")
         for t in tracks:
+            if not t.startswith("../"):
+                t = "../" + t
             f.write(f"{t}\n")
 
 
@@ -175,16 +177,8 @@ def validate_playlist(name):
         "valid": len(missing) == 0,
         "total_tracks": len(tracks),
         "missing_tracks": len(missing),
-        "missing": missing
-    })
-
-    path = playlist_path(name)
-
-    tracks = read_playlist(path)
-
-    return jsonify({
-        "name": name,
-        "tracks": tracks
+        # strip ../
+        "missing": [t[3:] if t.startswith("../") else t for t in missing]
     })
 
 
@@ -192,6 +186,10 @@ def validate_playlist(name):
 def get_playlist(name):
     path = playlist_path(name)
     tracks = read_playlist(path)
+
+    # Remove leading "../" for frontend
+    tracks = [t[3:] if t.startswith("../") else t for t in tracks]
+
     return jsonify({"name": name, "tracks": tracks})
 
 
@@ -289,9 +287,11 @@ def dir_recursive():
 
             full = os.path.join(root, f)
 
-            rel_music = os.path.relpath(full, config.PLAYLIST_MUSIC_DIR)
+            # Make path relative to MUSIC_ROOT and normalize slashes
+            rel_music = os.path.relpath(
+                full, config.MUSIC_ROOT).replace("\\", "/")
 
-            tracks.append("../" + rel_music)
+            tracks.append(rel_music)
 
     return jsonify(tracks)
 

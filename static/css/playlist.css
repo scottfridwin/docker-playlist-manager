@@ -1,0 +1,120 @@
+/* ===========================
+   playlist.css
+=========================== */
+
+ul {
+    list-style: none;
+}
+
+li {
+    padding: 0;
+    border: none;
+}
+
+.playlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.playlist-row {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.playlist-row:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.playlist-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.playlist-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.playlist-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.playlist-actions button {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+/* Skeleton loader for playlist rows */
+.skeleton {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    animation: pulse 1.2s infinite ease-in-out;
+}
+
+.placeholder {
+    display: inline-block;
+    background: #333;
+    /* darker gray */
+    border-radius: 6px;
+}
+
+.playlist-row.skeleton {
+    width: 100%;
+    /* ensures it fills the grid column */
+    box-sizing: border-box;
+}
+
+.playlist-row.skeleton .playlist-name.placeholder {
+    width: 120px;
+    height: 16px;
+    margin-bottom: 6px;
+}
+
+.playlist-row.skeleton .playlist-meta.placeholder {
+    width: 80px;
+    height: 12px;
+}
+
+.playlist-row.skeleton .playlist-actions .placeholder {
+    width: 50px;
+    height: 24px;
+}
+
+/* Pulse animation */
+@keyframes pulse {
+    0% {
+        background-color: #2a2a2a;
+    }
+
+    50% {
+        background-color: #3a3a3a;
+    }
+
+    100% {
+        background-color: #2a2a2a;
+    }
+}

@@ -1,0 +1,45 @@
+/* ===========================
+   RESPONSIVE
+=========================== */
+
+@media (max-width: 768px) {
+
+    .container {
+        padding: 16px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 24px;
+    }
+
+    .header-right {
+        flex-direction: column;
+    }
+
+    .header-right input,
+    .header-right select {
+        width: 100%;
+    }
+
+    .playlist-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .editor-container {
+        grid-template-columns: 1fr;
+    }
+
+    .editor-sidebar {
+        flex-direction: row;
+    }
+
+    .track-list {
+        max-height: 400px;
+    }
+}

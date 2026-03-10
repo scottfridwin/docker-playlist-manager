@@ -7,35 +7,66 @@
     <meta name="description" content="Manage M3U8 playlists from your music library">
     <title>Playlist Manager</title>
 
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="manifest" href="/static/manifest.json">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/buttons.css">
+    <link rel="stylesheet" href="/static/css/inputs.css">
+    <link rel="stylesheet" href="/static/css/header.css">
+    <link rel="stylesheet" href="/static/css/playlist.css">
+    <link rel="stylesheet" href="/static/css/editor.css">
+    <link rel="stylesheet" href="/static/css/browser.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
 </head>
 
 <body>
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <h1>🎵 Playlists</h1>
+                <h1>
+                    <span class="material-icons">library_music</span>
+                    Playlists
+                </h1>
             </div>
+
             <div class="header-right">
-                <input type="text" id="search" placeholder="Search playlists..."
-                    style="margin-right: 12px; width: 200px;">
-                <button onclick="createPlaylist()">+ New Playlist</button>
+                <div class="search-field">
+                    <span class="material-icons">search</span>
+                    <input type="text" id="search" placeholder="Search playlists...">
+                </div>
+
+                <button onclick="createPlaylist()">
+                    <span class="material-icons">add</span>
+                    New Playlist
+                </button>
             </div>
         </div>
 
-        <div id="list" class="playlist-grid"></div>
+        <!-- Playlist container -->
+        <div id="list"></div>
 
         <div id="pager" class="pager"></div>
     </div>
 
+    <!-- App scripts -->
     <script src="/static/app.js"></script>
+    <script src="/static/playlists.js"></script>
+    <script src="/static/editor.js"></script>
+
+    <!-- Browser scripts -->
+    <script src="/static/browser/browser-modal.js"></script>
+    <script src="/static/browser/browser-navigation.js"></script>
+    <script src="/static/browser/browser-selection.js"></script>
+
     <script>
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("/static/sw.js").catch(err => {
                 console.log("ServiceWorker registration failed:", err);
             });
         }
+
+        // Initialize index page after DOM loads
+        window.addEventListener("DOMContentLoaded", initIndex);
     </script>
 </body>
 

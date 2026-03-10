@@ -7,12 +7,23 @@
     <meta name="description" content="Edit playlists">
     <title>Playlist Editor</title>
 
-    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/buttons.css">
+    <link rel="stylesheet" href="/static/css/inputs.css">
+    <link rel="stylesheet" href="/static/css/header.css">
+    <link rel="stylesheet" href="/static/css/playlist.css">
+    <link rel="stylesheet" href="/static/css/editor.css">
+    <link rel="stylesheet" href="/static/css/browser.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
 </head>
 
 <body>
     <div class="container">
-        <h1>✏️ Playlist Editor</h1>
+        <h1>
+            <span class="material-icons">edit</span>
+            Playlist Editor
+        </h1>
 
         <div class="editor-container">
             <div class="editor-main">
@@ -23,21 +34,41 @@
 
                 <div class="form-group">
                     <div class="track-list-header">
-                        <h3>Tracks (<span id="track-count">0</span>)</h3>
+                        <h3>
+                            <span class="material-icons">queue_music</span>
+                            Tracks (<span id="track-count">0</span>)
+                        </h3>
                     </div>
                     <ul id="tracks" class="track-list"></ul>
                 </div>
             </div>
 
             <div class="editor-sidebar">
-                <button onclick="openBrowser()">➕ Add Tracks</button>
-                <button class="secondary" onclick="cancel()">✕ Cancel</button>
-                <button class="primary" onclick="save()">💾 Save</button>
+                <button onclick="openBrowser()">
+                    <span class="material-icons">playlist_add</span>
+                    Add Tracks
+                </button>
+
+                <button class="secondary" onclick="cancel()">
+                    <span class="material-icons">close</span>
+                    Cancel
+                </button>
+
+                <button class="primary" onclick="save()">
+                    <span class="material-icons">save</span>
+                    Save
+                </button>
             </div>
         </div>
     </div>
 
     <script src="/static/app.js"></script>
+    <script src="/static/playlists.js"></script>
+    <script src="/static/editor.js"></script>
+
+    <script src="/static/browser/browser-modal.js"></script>
+    <script src="/static/browser/browser-navigation.js"></script>
+    <script src="/static/browser/browser-selection.js"></script>
     <script>
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("/static/sw.js").catch(err => {

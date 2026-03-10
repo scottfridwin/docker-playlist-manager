@@ -268,13 +268,24 @@ def browse_music():
 def dir_recursive():
 
     rel = request.args.get("path", "")
-
     target = os.path.abspath(os.path.join(config.MUSIC_ROOT, rel))
+
+    if not target.startswith(config.MUSIC_ROOT):
+        return jsonify({"error": "invalid path"}), 400
 
     tracks = []
 
     for root, dirs, files in os.walk(target):
+
+        # ensure deterministic ordering
+        dirs.sort(key=lambda x: x.lower())
+        files.sort(key=lambda x: x.lower())
+
         for f in files:
+
+            ext = f.rsplit(".", 1)[-1].lower() if "." in f else ""
+            if ext not in config.AUDIO_EXTENSIONS:
+                continue
 
             full = os.path.join(root, f)
 

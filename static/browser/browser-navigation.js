@@ -30,7 +30,7 @@ async function loadBrowser(path) {
                 </div>
                 <div class="browser-row-right">
                     <span class="dir-selected"></span> <!-- <-- keep it inside -->
-                    <button class="small" onclick="browserAddDir('${item.name}')">Add All</button>
+                    <button class="small browser-add-dir browser-button" onclick="browserAddDir('${item.name}')">Add All</button>
                 </div>
             `;
 
@@ -66,13 +66,15 @@ function renderBreadcrumbs() {
     pathEl.innerHTML = ""
     const root = document.createElement("button")
     root.innerHTML = '<span class="material-icons">home</span>'
+    root.classList.add("breadcrumb-button", "browser-button")
     root.onclick = () => loadBrowser("")
     pathEl.appendChild(root)
     if (!currentBrowsePath) return
     const parts = currentBrowsePath.split("/")
     parts.forEach((p, i) => {
         const btn = document.createElement("button")
-        btn.textContent = p
+        btn.classList.add("breadcrumb-button", "browser-button")
+        btn.textContent = stripGuid(p)
         btn.onclick = () => {
             const newPath = parts.slice(0, i + 1).join("/")
             loadBrowser(newPath)

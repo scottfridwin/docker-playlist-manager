@@ -48,47 +48,65 @@ function browserAdd() {
 
 // Add all files in a directory to the selection
 async function browserAddDir(dirName) {
-    const dirPath = currentBrowsePath ? `${currentBrowsePath}/${dirName}` : dirName;
-
     try {
-        const r = await fetch(`/api/music?path=${encodeURIComponent(dirPath)}`);
-        const data = await r.json();
+        const dirPath = currentBrowsePath ? `${currentBrowsePath}/${dirName}` : dirName;
+
+        // Disable buttons
+        const buttons = document.querySelectorAll(".browser-button")
+        buttons.forEach(btn => {
+            btn.disabled = true
+        })
 
         let addedCount = 0;
 
-        // Add only files (not subdirectories)
-        data.items.forEach(item => {
-            if (!item.is_dir) {
-                const fullFile = `${dirPath}/${item.name}`;
-                if (!checkedItems.includes(fullFile)) {
-                    checkedItems.push(fullFile);
-                    addedCount++;
+        async function walk(path) {
+            const r = await fetch(`/api/music?path=${encodeURIComponent(path)}`);
+            const data = await r.json();
+
+            for (const item of data.items) {
+                const full = `${path}/${item.name}`;
+
+                if (item.is_dir) {
+                    await walk(full); // recurse into subdirectory
+                } else {
+                    if (!checkedItems.includes(full)) {
+                        checkedItems.push(full);
+                        addedCount++;
+                    }
                 }
             }
-        });
+        }
 
-        // Update checkboxes in the current list, if visible
+        await walk(dirPath);
+
+        // Update UI indicator for this directory
         const listEl = document.getElementById("browser-list");
         if (listEl) {
             listEl.querySelectorAll(".browser-row").forEach(row => {
                 const rowName = row.dataset.name;
                 if (rowName === dirName) {
-                    // Show selected count inside folder row
-                    row.querySelector(".dir-selected")?.remove();
-                    if (addedCount > 0) {
-                        const span = document.createElement("span");
-                        span.className = "dir-selected";
-                        span.textContent = `${addedCount} track${addedCount > 1 ? "s" : ""} selected`;
-                        row.appendChild(span);
+                    const span = row.querySelector(".dir-selected");
+                    if (span && addedCount > 0) {
+                        span.textContent =
+                            `${addedCount} track${addedCount > 1 ? "s" : ""} selected`;
                     }
                 }
             });
         }
 
         updateSelectedCount();
-
     } catch (err) {
         console.error("Failed to add directory:", err);
         toast("Failed to add directory");
+    }
+    finally {
+        // Re-enable buttons
+        const buttons = document.querySelectorAll(".browser-button")
+        buttons.forEach(btn => {
+            btn.disabled = false
+        })
+
+        const addBtn = document.getElementById("browser-add-selected")
+        addBtn.disabled = checkedItems.length === 0
     }
 }

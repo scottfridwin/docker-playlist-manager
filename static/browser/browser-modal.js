@@ -3,6 +3,7 @@
 =========================== */
 
 function openBrowser() {
+    checkedItems = []
     const modal = document.createElement("div")
     modal.id = "browser-modal"
     modal.onclick = e => {
@@ -20,12 +21,12 @@ function openBrowser() {
             <span id="browser-selected-count">0 selected</span>
 
             <div class="browser-actions">
-                <button onclick="browserAdd()" class="primary">
+                <button onclick="browserAdd()" class="primary browser-button" id="browser-add-selected" disabled>
                     <span class="material-icons">playlist_add</span>
                     Add Selected
                 </button>
 
-                <button onclick="closeBrowser()">
+                <button onclick="closeBrowser()" class="browser-button" id="browser-close">
                     <span class="material-icons">close</span>
                     Close
                 </button>
@@ -35,6 +36,7 @@ function openBrowser() {
     `
     document.body.style.overflow = "hidden"
     document.body.appendChild(modal)
+    document.addEventListener("keydown", browserEscHandler)
     loadBrowser(currentBrowsePath || "")
     updateSelectedCount()
 }
@@ -62,6 +64,6 @@ function updateSelectedCount() {
     document.getElementById("browser-selected-count").textContent =
         `${count} selected`
 
-    const addBtn = document.querySelector(".browser-actions button")
-    addBtn.disabled = count === 0
+    const addBtn = document.getElementById("browser-add-selected")
+    addBtn.disabled = checkedItems.length === 0
 }

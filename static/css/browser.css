@@ -111,3 +111,17 @@
     font-size: 12px;
     color: var(--text-secondary);
 }
+
+.browser-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-top: 1px solid #ddd;
+}
+
+.browser-footer button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}

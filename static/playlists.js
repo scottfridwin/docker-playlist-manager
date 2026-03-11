@@ -21,7 +21,13 @@ async function loadPlaylists(page = 1) {
     list.innerHTML = ""; // Clear first
 
     try {
-        const r = await fetch(`/api/playlists?page=${page}&sort=name&search=${encodeURIComponent(search)}`);
+        const params = new URLSearchParams({
+            page,
+            sort: "name",
+            search
+        });
+
+        const r = await fetch(`/api/playlists?${params}`);
         const data = await r.json();
 
         if (data.items.length === 0) {
@@ -45,21 +51,33 @@ async function loadPlaylists(page = 1) {
             row.innerHTML = `
                 <div style="display:flex;align-items:center;gap:8px;">
                     <div style="flex:1;">
-                        <span class="playlist-name">${p.name}</span>
+                        <span class="playlist-name"></span>
                         <span class="playlist-meta">Modified: ${date}</span>
                     </div>
                 </div>
                 <div class="playlist-actions">
-                    <button onclick="editPlaylist('${p.name}')">
+                    <button class="edit-btn">
                         <span class="material-icons">edit</span> Edit
                     </button>
-                    <button class="danger" onclick="deletePlaylist('${p.name}')">
+                    <button class="danger delete-btn">
                         <span class="material-icons">delete</span> Delete
                     </button>
                 </div>
             `;
 
-            list.appendChild(row); // append row directly
+            // Safely insert name as text
+            row.querySelector(".playlist-name").textContent = p.name;
+
+            // Attach handlers safely
+            row.querySelector(".edit-btn").addEventListener("click", () => {
+                editPlaylist(p.name);
+            });
+
+            row.querySelector(".delete-btn").addEventListener("click", () => {
+                deletePlaylist(p.name);
+            });
+
+            list.appendChild(row);
         });
 
     } catch (err) {

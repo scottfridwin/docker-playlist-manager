@@ -102,4 +102,11 @@ with open(dup_playlist, "w", encoding="utf-8") as f:
 # Empty playlist
 (playlist_dir / "empty.m3u8").touch()
 
+# Playlist name with special characters
+special_playlist = playlist_dir / "special_\'!@#$%^&*().m3u8"
+with open(special_playlist, "w", encoding="utf-8") as f:
+    f.write("#EXTM3U\n")
+    for _ in range(5):
+        f.write(f"{random.choice(all_tracks)}\n")
+
 print("Mock music library with realistic edge cases created!")

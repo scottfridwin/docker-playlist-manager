@@ -65,24 +65,30 @@ def read_playlist(path):
 def write_playlist(path, tracks):
     directory = os.path.dirname(path)
 
-    with tempfile.NamedTemporaryFile(
-        "w",
-        dir=directory,
-        delete=False,
-        encoding="utf-8"
-    ) as tmp:
+    # get current umask
+    umask = os.umask(0)
+    os.umask(umask)
+    mode = 0o666 & (~umask)
 
-        tmp.write("#EXTM3U\n")
+    # create a temporary file with correct permissions
+    fd, temp_name = tempfile.mkstemp(dir=directory)
+    os.fchmod(fd, mode)  # apply umask immediately
 
-        for t in tracks:
-            if not t.startswith("../"):
-                t = "../" + t
-            tmp.write(f"{t}\n")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write("#EXTM3U\n")
+            for t in tracks:
+                if not t.startswith("../"):
+                    t = "../" + t
+                f.write(f"{t}\n")
 
-        temp_name = tmp.name
+        # atomic replace
+        os.replace(temp_name, path)
 
-    # Atomic replace
-    os.replace(temp_name, path)
+    finally:
+        # fallback: ensure temp file is removed if something fails
+        if os.path.exists(temp_name):
+            os.remove(temp_name)
 
 
 @app.route("/")

@@ -1,3 +1,4 @@
+import tempfile
 import os
 import pathlib
 import logging
@@ -30,7 +31,19 @@ def strip_guid(name):
 
 
 def playlist_path(name):
-    safe = "".join(c for c in name if c.isascii() and c not in "/\\")
+    name = name.strip()
+
+    # Replace invalid characters
+    safe = re.sub(r'[^\w\s\-]', '', name)
+
+    # Collapse whitespace
+    safe = re.sub(r'\s+', ' ', safe)
+
+    safe = safe.strip()
+
+    if not safe:
+        raise ValueError("Invalid playlist name")
+
     return os.path.join(config.PLAYLIST_ROOT, safe + ".m3u8")
 
 
@@ -50,12 +63,26 @@ def read_playlist(path):
 
 
 def write_playlist(path, tracks):
-    with open(path, "w") as f:
-        f.write("#EXTM3U\n")
+    directory = os.path.dirname(path)
+
+    with tempfile.NamedTemporaryFile(
+        "w",
+        dir=directory,
+        delete=False,
+        encoding="utf-8"
+    ) as tmp:
+
+        tmp.write("#EXTM3U\n")
+
         for t in tracks:
             if not t.startswith("../"):
                 t = "../" + t
-            f.write(f"{t}\n")
+            tmp.write(f"{t}\n")
+
+        temp_name = tmp.name
+
+    # Atomic replace
+    os.replace(temp_name, path)
 
 
 @app.route("/")
@@ -193,20 +220,28 @@ def get_playlist(name):
     return jsonify({"name": name, "tracks": tracks})
 
 
-@app.route("/api/playlist", methods=["POST"])
-def save_playlist():
+@app.route("/api/playlist/<name>", methods=["PUT"])
+def save_playlist(name):
 
-    data = request.json
+    data = request.json or {}
+    tracks = data.get("tracks", [])
 
-    name = data["name"].strip()
-
-    tracks = data["tracks"]
+    if not name.strip():
+        return jsonify({"error": "Playlist name required"}), 400
 
     path = playlist_path(name)
 
+    created = not os.path.exists(path)
+
     try:
         write_playlist(path, tracks)
-        return jsonify({"status": "ok"})
+
+        return jsonify({
+            "status": "created" if created else "updated",
+            "name": name,
+            "tracks": len(tracks)
+        })
+
     except (OSError, IOError) as e:
         return jsonify({"error": f"Failed to save playlist: {str(e)}"}), 500
 

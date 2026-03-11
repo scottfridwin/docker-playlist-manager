@@ -42,6 +42,7 @@ function browserAdd() {
     if (added > 0) {
         toast(`${added} track${added > 1 ? "s" : ""} added`)
     }
+    checkedItems = []
     closeBrowser()
     renderTracks()
 }

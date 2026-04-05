@@ -14,12 +14,21 @@ function initEditor(name = null) {
 
     container.innerHTML = "";
 
-    const title = name ? `Editing Playlist: ${name}` : "New Playlist";
+    const nameInputValue = name || "";
 
     container.innerHTML = `
         <div class="editor-header">
-            <h2>${title}</h2>
-            <div style="margin-left:auto; display:flex; gap:8px;">
+            <div style="display:flex; align-items:center; gap:12px; flex:1;">
+                <label for="playlist-name-input" style="font-weight:600;">Playlist Name:</label>
+                <input 
+                    type="text" 
+                    id="playlist-name-input" 
+                    value="${escapeHtml(nameInputValue)}"
+                    placeholder="Enter playlist name"
+                    style="flex:1; max-width:400px;"
+                />
+            </div>
+            <div style="display:flex; gap:8px;">
                 <button onclick="backToPlaylists()">
                     <span class="material-icons">arrow_back</span> Back
                 </button>
@@ -117,22 +126,44 @@ function dragEnd() {
 
 // Save playlist
 async function savePlaylist() {
-    if (!currentPlaylist) {
-        currentPlaylist = prompt("Enter new playlist name:");
-        if (!currentPlaylist) return;
+    const nameInput = document.getElementById("playlist-name-input");
+    const newName = nameInput ? nameInput.value.trim() : null;
+
+    if (!newName) {
+        alert("Please enter a playlist name");
+        return;
     }
 
     try {
-        await fetch(`/api/playlist/${encodeURIComponent(currentPlaylist)}`, {
+        const payload = { 
+            tracks: currentTracks,
+            newName: newName
+        };
+
+        // Use the old name in the URL if renaming, otherwise use the new name
+        const urlName = currentPlaylist || newName;
+
+        const response = await fetch(`/api/playlist/${encodeURIComponent(urlName)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tracks: currentTracks })
+            body: JSON.stringify(payload)
         });
 
-        toast(`Playlist "${currentPlaylist}" saved!`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Failed to save playlist");
+            return;
+        }
+
+        // Update currentPlaylist to the new name for future saves
+        currentPlaylist = data.name;
+        nameInput.value = data.name;
+
+        toast(`Playlist "${data.name}" saved!`);
     } catch (err) {
         console.error("Failed to save playlist:", err);
-        toast("Failed to save playlist");
+        alert("Failed to save playlist");
     }
 }
 
@@ -146,6 +177,13 @@ function backToPlaylists() {
 function openBrowser() {
     showPage("browser-modal");
     loadBrowser(""); // your existing browser code
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 /* ===========================

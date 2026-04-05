@@ -233,20 +233,28 @@ def save_playlist(name):
 
     data = request.json or {}
     tracks = data.get("tracks", [])
+    new_name = data.get("newName", "").strip()
 
-    if not name.strip():
+    # Use newName if provided, otherwise use the URL name parameter
+    final_name = new_name if new_name else name
+
+    if not final_name.strip():
         return jsonify({"error": "Playlist name required"}), 400
 
-    path = playlist_path(name)
-
-    created = not os.path.exists(path)
+    old_path = playlist_path(name)
+    new_path = playlist_path(final_name)
 
     try:
-        write_playlist(path, tracks)
+        # If renaming, delete the old file first
+        if name != final_name and os.path.exists(old_path):
+            os.remove(old_path)
+
+        created = not os.path.exists(new_path)
+        write_playlist(new_path, tracks)
 
         return jsonify({
             "status": "created" if created else "updated",
-            "name": name,
+            "name": final_name,
             "tracks": len(tracks)
         })
 

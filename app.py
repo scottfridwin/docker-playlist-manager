@@ -307,7 +307,7 @@ def download_playlist(name):
             zip_buffer,
             mimetype="application/zip",
             as_attachment=True,
-            attachment_filename=f"{name}.zip"
+            download_name=f"{name}.zip"
         )
     
     except Exception as e:

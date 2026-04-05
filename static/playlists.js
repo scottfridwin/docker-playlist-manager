@@ -72,8 +72,8 @@ async function loadPlaylists(page = 1) {
             row.querySelector(".playlist-name").textContent = p.name;
 
             // Attach handlers safely
-            row.querySelector(".download-btn").addEventListener("click", () => {
-                downloadPlaylist(p.name);
+            row.querySelector(".download-btn").addEventListener("click", function() {
+                downloadPlaylist(p.name, this);
             });
 
             row.querySelector(".edit-btn").addEventListener("click", () => {
@@ -104,13 +104,21 @@ async function deletePlaylist(name) {
     loadPlaylists();
 }
 
-async function downloadPlaylist(name) {
+async function downloadPlaylist(name, button) {
     try {
+        // Disable button and show loading state
+        button.disabled = true;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<span class="material-icons spinner">downloading</span> Downloading...';
+        
         const response = await fetch(`/api/playlist/${encodeURIComponent(name)}/download`);
         
         if (!response.ok) {
             const error = await response.json();
             alert(`Download failed: ${error.error || 'Unknown error'}`);
+            // Restore button
+            button.disabled = false;
+            button.innerHTML = originalHTML;
             return;
         }
 
@@ -123,9 +131,16 @@ async function downloadPlaylist(name) {
         a.click();
         window.URL.revokeObjectURL(url);
         a.remove();
+        
+        // Restore button after successful download
+        button.disabled = false;
+        button.innerHTML = originalHTML;
     } catch (err) {
         console.error("Failed to download playlist:", err);
         alert("Download failed: " + err.message);
+        // Restore button
+        button.disabled = false;
+        button.innerHTML = originalHTML;
     }
 }
 

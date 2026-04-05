@@ -3,7 +3,9 @@ import os
 import pathlib
 import logging
 import re
-from flask import Flask, jsonify, request, render_template, abort
+import zipfile
+import io
+from flask import Flask, jsonify, request, render_template, abort, send_file
 import config
 
 # Configure logging
@@ -263,6 +265,54 @@ def delete_playlist(name):
         return jsonify({"status": "deleted"})
     except (OSError, IOError) as e:
         return jsonify({"error": f"Failed to delete playlist: {str(e)}"}), 500
+
+
+@app.route("/api/playlist/<name>/download", methods=["GET"])
+def download_playlist(name):
+    """Download all tracks from a playlist as a ZIP file"""
+    path = playlist_path(name)
+    tracks = read_playlist(path)
+
+    if not tracks:
+        return jsonify({"error": "Playlist not found or empty"}), 404
+
+    # Create ZIP file in memory
+    zip_buffer = io.BytesIO()
+    
+    try:
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for track in tracks:
+                # Convert relative path to absolute path
+                if track.startswith("../"):
+                    track_path = os.path.join(config.MUSIC_ROOT, track[3:])
+                else:
+                    track_path = os.path.join(config.MUSIC_ROOT, track)
+                
+                # Ensure the path is within MUSIC_ROOT (security check)
+                track_path = os.path.abspath(track_path)
+                if not track_path.startswith(config.MUSIC_ROOT):
+                    logger.warning(f"Attempted to access path outside MUSIC_ROOT: {track_path}")
+                    continue
+                
+                # Only add file if it exists
+                if os.path.exists(track_path) and os.path.isfile(track_path):
+                    # Get the relative path for the archive (preserve directory structure)
+                    arcname = os.path.relpath(track_path, config.MUSIC_ROOT)
+                    zip_file.write(track_path, arcname)
+                else:
+                    logger.warning(f"Track file not found: {track_path}")
+        
+        zip_buffer.seek(0)
+        return send_file(
+            zip_buffer,
+            mimetype="application/zip",
+            as_attachment=True,
+            attachment_filename=f"{name}.zip"
+        )
+    
+    except Exception as e:
+        logger.error(f"Failed to create zip file: {str(e)}")
+        return jsonify({"error": f"Failed to download playlist: {str(e)}"}), 500
 
 
 @app.route("/api/music")

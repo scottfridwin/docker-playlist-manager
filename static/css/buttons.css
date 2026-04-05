@@ -54,6 +54,15 @@ button.danger:hover {
     box-shadow: 0 8px 16px rgba(231, 76, 60, 0.3);
 }
 
+button.download-btn {
+    background: var(--secondary);
+}
+
+button.download-btn:hover {
+    background: var(--secondary-light);
+    box-shadow: 0 8px 16px rgba(30, 144, 255, 0.3);
+}
+
 /* small button variant */
 button.small {
     padding: 4px 8px;

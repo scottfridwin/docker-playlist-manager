@@ -56,6 +56,9 @@ async function loadPlaylists(page = 1) {
                     </div>
                 </div>
                 <div class="playlist-actions">
+                    <button class="download-btn">
+                        <span class="material-icons">download</span> Download
+                    </button>
                     <button class="edit-btn">
                         <span class="material-icons">edit</span> Edit
                     </button>
@@ -69,6 +72,10 @@ async function loadPlaylists(page = 1) {
             row.querySelector(".playlist-name").textContent = p.name;
 
             // Attach handlers safely
+            row.querySelector(".download-btn").addEventListener("click", () => {
+                downloadPlaylist(p.name);
+            });
+
             row.querySelector(".edit-btn").addEventListener("click", () => {
                 editPlaylist(p.name);
             });
@@ -95,6 +102,31 @@ async function deletePlaylist(name) {
 
     await fetch(`/api/playlist/${encodeURIComponent(name)}`, { method: "DELETE" });
     loadPlaylists();
+}
+
+async function downloadPlaylist(name) {
+    try {
+        const response = await fetch(`/api/playlist/${encodeURIComponent(name)}/download`);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            alert(`Download failed: ${error.error || 'Unknown error'}`);
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${name}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    } catch (err) {
+        console.error("Failed to download playlist:", err);
+        alert("Download failed: " + err.message);
+    }
 }
 
 /* ===========================

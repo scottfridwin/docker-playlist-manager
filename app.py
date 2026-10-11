@@ -1,16 +1,17 @@
-import tempfile
+import io
+import logging
 import os
 import pathlib
-import logging
 import re
+import tempfile
 import zipfile
-import io
-from flask import Flask, jsonify, request, render_template, abort, send_file
+
+from flask import Flask, jsonify, render_template, request, send_file
+
 import config
 
 # Configure logging
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # apply umask if configured before any files are created
@@ -33,13 +34,15 @@ def strip_guid(name):
 
 
 def playlist_path(name):
+    if not isinstance(name, str):
+        raise ValueError("Invalid playlist name")
     name = name.strip()
 
     # Replace invalid characters
-    safe = re.sub(r'[^\w\s\-]', '', name)
+    safe = re.sub(r"[^\w\s\-]", "", name)
 
     # Collapse whitespace
-    safe = re.sub(r'\s+', ' ', safe)
+    safe = re.sub(r"\s+", " ", safe)
 
     safe = safe.strip()
 
@@ -49,12 +52,30 @@ def playlist_path(name):
     return os.path.join(config.PLAYLIST_ROOT, safe + ".m3u8")
 
 
+def is_within(root, path):
+    """True if path, with symlinks resolved, is root or inside it."""
+    root = os.path.realpath(root)
+    path = os.path.realpath(path)
+    return os.path.commonpath([root, path]) == root
+
+
+def music_path(rel):
+    """Absolute path of a MUSIC_ROOT-relative path, or None if it escapes MUSIC_ROOT."""
+    path = os.path.join(config.MUSIC_ROOT, rel)
+    return path if is_within(config.MUSIC_ROOT, path) else None
+
+
+def track_path(track):
+    """Absolute path of a playlist entry (stored relative to the playlist folder as ../<track>)."""
+    return music_path(track[3:] if track.startswith("../") else track)
+
+
 def read_playlist(path):
     tracks = []
     if not os.path.exists(path):
         return tracks
 
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         lines = f.read().splitlines()
 
     for line in lines[1:]:
@@ -98,15 +119,15 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/editor")
-def editor():
-    return render_template("editor.html")
-
-
 @app.route("/health")
 def health():
     """Health check endpoint for monitoring"""
-    return jsonify({"status": "healthy", "version": "1.0.0"})
+    return jsonify({"status": "healthy"})
+
+
+@app.errorhandler(ValueError)
+def bad_request(error):
+    return jsonify({"error": str(error), "status_code": 400}), 400
 
 
 @app.errorhandler(404)
@@ -124,17 +145,17 @@ def internal_error(error):
 def playlists():
 
     sort = request.args.get("sort", "name")
-    page = int(request.args.get("page", 1))
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except ValueError:
+        raise ValueError("Invalid page number") from None
     search = request.args.get("search", "").strip().lower()
 
     files = []
 
     for f in pathlib.Path(config.PLAYLIST_ROOT).glob("*.m3u8"):
         stat = f.stat()
-        files.append({
-            "name": f.stem,
-            "mtime": stat.st_mtime
-        })
+        files.append({"name": f.stem, "mtime": stat.st_mtime})
 
     # Filter by search term
     if search:
@@ -148,18 +169,13 @@ def playlists():
     start = (page - 1) * config.PAGE_SIZE
     end = start + config.PAGE_SIZE
 
-    return jsonify({
-        "items": files[start:end],
-        "total": len(files),
-        "page": page,
-        "search": search
-    })
+    return jsonify({"items": files[start:end], "total": len(files), "page": page, "search": search})
 
 
 @app.route("/api/playlists", methods=["DELETE"])
 def bulk_delete_playlists():
     """Delete multiple playlists at once"""
-    data = request.json
+    data = request.get_json(silent=True) or {}
     names = data.get("names", [])
 
     if not names or not isinstance(names, list):
@@ -176,15 +192,12 @@ def bulk_delete_playlists():
                 deleted.append(name)
             else:
                 errors.append(f"Playlist '{name}' not found")
-        except (OSError, IOError) as e:
+        except ValueError:
+            errors.append(f"Invalid playlist name '{name}'")
+        except OSError as e:
             errors.append(f"Failed to delete '{name}': {str(e)}")
 
-    return jsonify({
-        "deleted": deleted,
-        "errors": errors,
-        "total_deleted": len(deleted),
-        "total_errors": len(errors)
-    })
+    return jsonify({"deleted": deleted, "errors": errors, "total_deleted": len(deleted), "total_errors": len(errors)})
 
 
 @app.route("/api/playlist/<name>/validate")
@@ -198,23 +211,19 @@ def validate_playlist(name):
 
     missing = []
     for track in tracks:
-        # Convert relative path to absolute path
-        if track.startswith("../"):
-            track_path = os.path.join(
-                config.MUSIC_ROOT, track[3:])  # Remove "../"
-        else:
-            track_path = os.path.join(config.MUSIC_ROOT, track)
-
-        if not os.path.exists(track_path):
+        path = track_path(track)
+        if path is None or not os.path.exists(path):
             missing.append(track)
 
-    return jsonify({
-        "valid": len(missing) == 0,
-        "total_tracks": len(tracks),
-        "missing_tracks": len(missing),
-        # strip ../
-        "missing": [t[3:] if t.startswith("../") else t for t in missing]
-    })
+    return jsonify(
+        {
+            "valid": len(missing) == 0,
+            "total_tracks": len(tracks),
+            "missing_tracks": len(missing),
+            # strip ../
+            "missing": [t[3:] if t.startswith("../") else t for t in missing],
+        }
+    )
 
 
 @app.route("/api/playlist/<name>", methods=["GET"])
@@ -231,9 +240,18 @@ def get_playlist(name):
 @app.route("/api/playlist/<name>", methods=["PUT"])
 def save_playlist(name):
 
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     tracks = data.get("tracks", [])
-    new_name = data.get("newName", "").strip()
+    new_name = data.get("newName") or ""
+    if not isinstance(new_name, str):
+        raise ValueError("Invalid playlist name")
+    new_name = new_name.strip()
+
+    if not isinstance(tracks, list) or not all(isinstance(t, str) for t in tracks):
+        raise ValueError("'tracks' must be a list of strings")
+    for t in tracks:
+        if "\n" in t or "\r" in t or track_path(t) is None:
+            raise ValueError(f"Invalid track path: {t!r}")
 
     # Use newName if provided, otherwise use the URL name parameter
     final_name = new_name if new_name else name
@@ -245,20 +263,16 @@ def save_playlist(name):
     new_path = playlist_path(final_name)
 
     try:
-        # If renaming, delete the old file first
-        if name != final_name and os.path.exists(old_path):
-            os.remove(old_path)
-
         created = not os.path.exists(new_path)
         write_playlist(new_path, tracks)
 
-        return jsonify({
-            "status": "created" if created else "updated",
-            "name": final_name,
-            "tracks": len(tracks)
-        })
+        # Renamed: remove the old file only after the new one is safely written
+        if old_path != new_path and os.path.exists(old_path):
+            os.remove(old_path)
 
-    except (OSError, IOError) as e:
+        return jsonify({"status": "created" if created else "updated", "name": final_name, "tracks": len(tracks)})
+
+    except OSError as e:
         return jsonify({"error": f"Failed to save playlist: {str(e)}"}), 500
 
 
@@ -271,7 +285,7 @@ def delete_playlist(name):
         if os.path.exists(path):
             os.remove(path)
         return jsonify({"status": "deleted"})
-    except (OSError, IOError) as e:
+    except OSError as e:
         return jsonify({"error": f"Failed to delete playlist: {str(e)}"}), 500
 
 
@@ -286,39 +300,25 @@ def download_playlist(name):
 
     # Create ZIP file in memory
     zip_buffer = io.BytesIO()
-    
+
     try:
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
             for track in tracks:
-                # Convert relative path to absolute path
-                if track.startswith("../"):
-                    track_path = os.path.join(config.MUSIC_ROOT, track[3:])
-                else:
-                    track_path = os.path.join(config.MUSIC_ROOT, track)
-                
-                # Ensure the path is within MUSIC_ROOT (security check)
-                track_path = os.path.abspath(track_path)
-                if not track_path.startswith(config.MUSIC_ROOT):
-                    logger.warning(f"Attempted to access path outside MUSIC_ROOT: {track_path}")
+                path = track_path(track)
+                if path is None:
+                    logger.warning(f"Skipping track outside MUSIC_ROOT: {track}")
                     continue
-                
-                # Only add file if it exists
-                if os.path.exists(track_path) and os.path.isfile(track_path):
-                    # Get the relative path for the archive (preserve directory structure)
-                    arcname = os.path.relpath(track_path, config.MUSIC_ROOT)
-                    zip_file.write(track_path, arcname)
+
+                if os.path.isfile(path):
+                    # Preserve the directory structure inside the archive
+                    zip_file.write(path, os.path.relpath(path, config.MUSIC_ROOT))
                 else:
-                    logger.warning(f"Track file not found: {track_path}")
-        
+                    logger.warning(f"Track file not found: {path}")
+
         zip_buffer.seek(0)
-        return send_file(
-            zip_buffer,
-            mimetype="application/zip",
-            as_attachment=True,
-            download_name=f"{name}.zip"
-        )
-    
-    except Exception as e:
+        return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, download_name=f"{name}.zip")
+
+    except Exception as e:  # noqa: BLE001 - report any archive failure to the client
         logger.error(f"Failed to create zip file: {str(e)}")
         return jsonify({"error": f"Failed to download playlist: {str(e)}"}), 500
 
@@ -328,9 +328,9 @@ def browse_music():
 
     rel = request.args.get("path", "")
 
-    target = os.path.abspath(os.path.join(config.MUSIC_ROOT, rel))
+    target = music_path(rel)
 
-    if not target.startswith(config.MUSIC_ROOT):
+    if target is None:
         return jsonify({"error": "invalid path"}), 400
 
     entries = []
@@ -340,46 +340,44 @@ def browse_music():
             for entry in it:
                 # Filter out non-audio files (only for files, not directories)
                 if not entry.is_dir():
-                    ext = entry.name.rsplit(
-                        '.', 1)[-1].lower() if '.' in entry.name else ''
+                    ext = entry.name.rsplit(".", 1)[-1].lower() if "." in entry.name else ""
                     if ext not in config.AUDIO_EXTENSIONS:
                         continue
 
-                entries.append({
-                    "name": entry.name,            # real filesystem name
-                    "display": strip_guid(entry.name),  # clean UI name
-                    "is_dir": entry.is_dir()
-                })
+                entries.append(
+                    {
+                        "name": entry.name,  # real filesystem name
+                        "display": strip_guid(entry.name),  # clean UI name
+                        "is_dir": entry.is_dir(),
+                    }
+                )
     except PermissionError:
         return jsonify({"error": "permission denied"}), 403
+    except FileNotFoundError, NotADirectoryError:
+        return jsonify({"error": "not found"}), 404
 
     entries.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
 
-    return jsonify({
-        "path": rel,
-        "items": entries
-    })
+    return jsonify({"path": rel, "items": entries})
 
 
 @app.route("/api/dir_recursive")
 def dir_recursive():
 
     rel = request.args.get("path", "")
-    target = os.path.abspath(os.path.join(config.MUSIC_ROOT, rel))
+    target = music_path(rel)
 
-    if not target.startswith(config.MUSIC_ROOT):
+    if target is None:
         return jsonify({"error": "invalid path"}), 400
 
     tracks = []
 
     for root, dirs, files in os.walk(target):
-
         # ensure deterministic ordering
         dirs.sort(key=lambda x: x.lower())
         files.sort(key=lambda x: x.lower())
 
         for f in files:
-
             ext = f.rsplit(".", 1)[-1].lower() if "." in f else ""
             if ext not in config.AUDIO_EXTENSIONS:
                 continue
@@ -387,8 +385,7 @@ def dir_recursive():
             full = os.path.join(root, f)
 
             # Make path relative to MUSIC_ROOT and normalize slashes
-            rel_music = os.path.relpath(
-                full, config.MUSIC_ROOT).replace("\\", "/")
+            rel_music = os.path.relpath(full, config.MUSIC_ROOT).replace("\\", "/")
 
             tracks.append(rel_music)
 
@@ -396,4 +393,4 @@ def dir_recursive():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080)  # noqa: S104 - development server only; the image uses waitress

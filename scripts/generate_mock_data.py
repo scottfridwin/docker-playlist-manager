@@ -1,4 +1,3 @@
-import os
 import random
 import uuid
 from pathlib import Path
@@ -25,10 +24,7 @@ def random_name(prefix, index):
 
 
 def random_song_name():
-    words = [
-        "Love", "Dream", "Night", "Fire", "Sky", "Heart",
-        "Time", "Life", "Light", "Rain", "Moon", "Star"
-    ]
+    words = ["Love", "Dream", "Night", "Fire", "Sky", "Heart", "Time", "Life", "Light", "Rain", "Moon", "Star"]
     return " ".join(random.choices(words, k=random.randint(1, 3)))
 
 
@@ -78,9 +74,7 @@ print("Generating playlists...")
 for i in range(1, NUM_PLAYLISTS + 1):
     playlist_name = f"Playlist_{i}.m3u8"
     num_tracks = random.randint(*TRACKS_PER_PLAYLIST)
-    selected_tracks = random.sample(
-        all_tracks, min(num_tracks, len(all_tracks))
-    )
+    selected_tracks = random.sample(all_tracks, min(num_tracks, len(all_tracks)))
 
     path = playlist_dir / playlist_name
     with open(path, "w", encoding="utf-8") as f:
@@ -103,7 +97,7 @@ with open(dup_playlist, "w", encoding="utf-8") as f:
 (playlist_dir / "empty.m3u8").touch()
 
 # Playlist name with special characters
-special_playlist = playlist_dir / "special_\'!@#$%^&*().m3u8"
+special_playlist = playlist_dir / "special_'!@#$%^&*().m3u8"
 with open(special_playlist, "w", encoding="utf-8") as f:
     f.write("#EXTM3U\n")
     for _ in range(5):

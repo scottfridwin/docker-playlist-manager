@@ -1,27 +1,11 @@
-# Version control
-.git/
-.gitignore
-.github/
-
-# Development
-.vscode/
-.devcontainer/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.egg-info/
-.pytest_cache/
-.coverage
-
-# Test data
+.git
+.github
+.devcontainer
+.vscode
+.ruff_cache
+**/__pycache__
+docs
+scripts
 music/
 playlists/
-
-# Documentation
-README.md
-
-# Docker
-Dockerfile
-docker-compose*.yml
-.dockerignore
+*.md

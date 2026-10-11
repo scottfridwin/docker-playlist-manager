@@ -1,24 +1,20 @@
 services:
   playlist-manager:
-    image: ghcr.io/scottfridwin/playlist-manager:main
+    image: ghcr.io/scottfridwin/playlist-manager:1
     container_name: playlist-manager
-    user: "1234:5678"
+    user: "1000:1000" # owner of the playlist folder
     read_only: true
+    tmpfs:
+      - /tmp
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
-    tmpfs:
-      - /tmp
-      - /run
     ports:
       - "8080:8080"
     environment:
-      PLAYLIST_DIR: /playlists
-      MUSIC_DIR: /music
-      AUDIO_EXTENSIONS: mp3,flac,wav,aac,m4a,ogg,wma,aiff
-      PYTHONUNBUFFERED: "1"
+      UMASK: "0002"
     volumes:
-      - /playlists:/playlists
-      - /music:/music:ro
+      - /path/to/music/Playlists:/playlists
+      - /path/to/music:/music:ro
     restart: unless-stopped

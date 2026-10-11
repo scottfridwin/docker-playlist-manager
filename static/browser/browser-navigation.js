@@ -26,29 +26,36 @@ async function loadBrowser(path) {
             row.innerHTML = `
                 <div class="browser-row-left">
                     <span class="material-icons">folder</span>
-                    <span class="browser-row-name">${item.display || item.name}</span>
+                    <span class="browser-row-name"></span>
                 </div>
                 <div class="browser-row-right">
-                    <span class="dir-selected"></span> <!-- <-- keep it inside -->
-                    <button class="small browser-add-dir browser-button" onclick="browserAddDir('${item.name}')">Add All</button>
+                    <span class="dir-selected"></span>
+                    <button class="small browser-add-dir browser-button">Add All</button>
                 </div>
             `;
 
             row.querySelector(".browser-row-left").onclick = () => browserEnter(item.name);
+            row.querySelector(".browser-add-dir").addEventListener("click", () => browserAddDir(item.name));
 
         } else {
             // Track row: checkbox, icon, name
             const fullFile = currentBrowsePath ? `${currentBrowsePath}/${item.name}` : item.name;
-            const checked = checkedItems.includes(fullFile);
 
             row.innerHTML = `
                 <label class="browser-row-left">
-                    <input type="checkbox" ${checked ? "checked" : ""} onchange="browserCheckFile('${item.name}', this)">
+                    <input type="checkbox">
                     <span class="material-icons">music_note</span>
-                    <span class="browser-row-name">${item.display || item.name}</span>
+                    <span class="browser-row-name"></span>
                 </label>
             `;
+
+            const checkbox = row.querySelector("input");
+            checkbox.checked = checkedItems.includes(fullFile);
+            checkbox.addEventListener("change", () => browserCheckFile(item.name, checkbox));
         }
+
+        // Names come from the filesystem: always insert them as text
+        row.querySelector(".browser-row-name").textContent = item.display || item.name;
 
         listEl.appendChild(row);
     });

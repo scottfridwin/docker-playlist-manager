@@ -73,11 +73,13 @@ function renderTracks() {
         div.dataset.index = i;
 
         div.innerHTML = `
-            <span class="track">${stripGuid(track)}</span>
-            <button class="track-remove" onclick="removeTrack(${i})">
+            <span class="track"></span>
+            <button class="track-remove">
                 <span class="material-icons">close</span>
             </button>
         `;
+        div.querySelector(".track").textContent = stripGuid(track);
+        div.querySelector(".track-remove").addEventListener("click", () => removeTrack(i));
 
         // Drag & drop events
         div.addEventListener("dragstart", dragStart);

@@ -2,7 +2,7 @@
    sw.js
 =========================== */
 
-const CACHE = "playlist-manager-v2";
+const CACHE = "playlist-manager-v3";
 
 const FILES_TO_CACHE = [
     "/",
@@ -16,7 +16,6 @@ const FILES_TO_CACHE = [
     "/static/css/browser.css",
     "/static/css/responsive.css",
     "/static/app.js",
-    "/static/spa-router.js",
     "/static/playlists.js",
     "/static/editor.js",
     "/static/browser/browser-modal.js",
